@@ -265,18 +265,43 @@ label.field{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weig
   .fit-row > div:first-child{border-right:0;border-bottom:1px solid var(--line)}
 }
 </style>
+<style>
+/* Additions for the live version */
+.sync{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:700;border-radius:999px;padding:3px 9px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
+.sync i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.sync.live{color:var(--ok);border-color:color-mix(in oklab,var(--ok) 40%,transparent)}
+.sync.live i{background:var(--ok);box-shadow:0 0 0 3px color-mix(in oklab,var(--ok) 25%,transparent)}
+.sync.local{color:var(--warn);border-color:color-mix(in oklab,var(--warn) 40%,transparent)}
+.sync.local i{background:var(--warn)}
+.banner{border:1px solid color-mix(in oklab,var(--warn) 40%,transparent);background:color-mix(in oklab,var(--warn) 10%,var(--surface));border-radius:12px;padding:10px 12px;font-size:.84rem;margin-bottom:10px}
+.qr-box{background:#fff;border-radius:14px;padding:14px;display:grid;place-items:center;gap:8px;color:#13201C;border:1px solid var(--line)}
+.qr-box canvas,.qr-box img{display:block;max-width:100%;height:auto}
+.qr-box .lbl{font-family:var(--f-display);font-weight:700;font-size:1rem}
+.qr-box .sub{font-size:.72rem;color:#4b5a55;text-align:center;word-break:break-all}
+.select-row{display:flex;flex-wrap:wrap;gap:6px}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:8px}
+.checks label{display:flex;gap:8px;align-items:center;font-size:.84rem}
+.checks input{accent-color:var(--jade)}
+.x{border:0;background:transparent;color:var(--muted);font-size:1.1rem;width:28px;height:28px;border-radius:50%}
+.x:hover{background:var(--surface-2)}
+.danger{color:var(--crit)!important;border-color:color-mix(in oklab,var(--crit) 45%,transparent)!important}
+.kpi .v.zero{color:var(--muted)}
+.howto{display:flex;flex-direction:column;gap:6px;font-size:.86rem}
+.howto b{color:var(--jade)}
+</style>
 
 <div class="wrap">
   <header class="topbar">
     <div class="brand"><span class="brand-mark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M4 7c4 0 4 5 8 5s4-5 8-5M4 15c4 0 4 5 8 5s4-5 8-5"/></svg></span>FlowIt<small>Pro</small></div>
-    <div class="row"><span class="demo-flag">DEMO</span><button class="icon-btn" id="langBtn" type="button" aria-label="Cambia lingua del menu">IT · 中文</button></div>
+    <div class="row"><span class="sync" id="sync" title="Stato della sincronizzazione"><i></i><span>Connessione…</span></span><button class="icon-btn" id="langBtn" type="button" aria-label="Cambia lingua del menu">IT · 中文</button></div>
   </header>
+  <div id="banner"></div>
   <main id="view"></main>
 </div>
 
 <div class="cartbar" id="cartbar" hidden><button type="button" id="openCart"><span class="row"><span class="cnt num" id="cartCnt">0</span><span>Vedi ordine</span></span><span class="num" id="cartTot">€ 0,00</span></button></div>
 
-<div class="tabbar"><nav aria-label="Viste demo">
+<div class="tabbar"><nav aria-label="Sezioni FlowIt">
   <a href="#cliente" data-v="cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/></svg>Cliente</a>
   <a href="#cucina" data-v="cucina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18M5 11a7 7 0 0 1 14 0M12 4V3M4 15h16l-1.5 5h-13z"/></svg>Cucina<span class="badge" id="kdsBadge" hidden>0</span></a>
   <a href="#titolare" data-v="titolare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Titolare</a>
@@ -286,8 +311,21 @@ label.field{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weig
 <div id="sheetRoot"></div>
 <div class="toast" id="toast" hidden></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-/* ---------- Dati: menu reale di Kung Fu Sapori (功夫美食), Corso Raffaello 0/C, Torino ---------- */
+/* =====================================================================
+   FlowIt Pro: motore (ordini, cucina, titolare) + dati del locale.
+   Il locale è configurato qui sotto: per un nuovo cliente si cambiano
+   RESTAURANT, CATS e RAW.
+   ===================================================================== */
+const RESTAURANT = {
+  name:'Kung Fu Sapori', zh:'功夫美食', seal:'功夫',
+  address:'Corso Raffaello 0/C, Torino', phone:'011 650 4920',
+  rating:'5,0', reviews:67, coperto:2, tables:12,
+  url:'https://claude.ai/artifact/Ps5Nn5FKHuU5sBJ6dCvNWf',
+};
+</script>
+<script>
 const CATS = [
   {k:'sig',   zh:'功夫招牌', it:'Firma Kung Fu',          g:'功', c:'--cinnabar'},
   {k:'dim',   zh:'点心',     it:'Ravioli e baozi',         g:'点', c:'--jade'},
@@ -452,146 +490,207 @@ const RAW = [
  ['V14','','Brunello di Montalcino',38,'vino','SO','v','bottiglia'],
  ['V15','','Cont’Ugo',50,'vino','SO','v','bottiglia'],
 ];
+
 const MENU = RAW.map(r=>({c:r[0],z:r[1],n:r[2],p:r[3],k:r[4],a:r[5]?r[5].split(','):[],f:r[6]||'',u:r[7]||'',v:r[8]||null,d:r[9]||''}));
 const BY = Object.fromEntries(MENU.map(m=>[m.c,m]));
 const CAT = Object.fromEntries(CATS.map(c=>[c.k,c]));
-const COPERTO = 2;
-const LUNCH = {price:12.9,
-  primi:['201','203','208','210'], secondi:['229','231','232','237','230'], bev:['B5','B6','B7','B14']};
+const DEFAULT_CFG = {soldOut:[], lunch:{price:12.9, primi:['201','203','208','210'], secondi:['229','231','232','237','230'], bev:['B5','B6','B7','B14']}};
 
-/* ---------- Stato ---------- */
-const S = {
-  view:'cliente', lang:'it', cat:'all', q:'', excl:new Set(),
-  cart:new Map(), people:2, table:7, note:'',
-  soldOut:new Set(['217']), pick:{}, // variante scelta per piatto
-  tickets:[], alerts:[], myTicket:null, seq:41,
-  bookings:[
-    {t:'12:30',name:'Martina R.',p:4,note:'Seggiolone',src:'Online'},
-    {t:'13:00',name:'Luca B.',p:2,note:'',src:'Telefono'},
-    {t:'20:00',name:'Chen W.',p:6,note:'Anatra intera da preordinare',src:'Online'},
-    {t:'20:30',name:'Giulia F.',p:3,note:'Allergia arachidi',src:'Online'},
-  ],
-  replied:new Set(),
-};
-const now = Date.now();
-S.tickets = [
-  {id:38,src:'Tavolo 3',qr:true,status:'prep',t:now-9*60e3,items:[{q:2,c:'108'},{q:1,c:'102'},{q:1,c:'234'},{q:2,c:'201'}],note:''},
-  {id:39,src:'Asporto · Marco',qr:false,status:'new',t:now-3*60e3,items:[{q:1,c:'300',v:'Metà'},{q:1,c:'249'}],note:'Ritiro 20:15'},
-  {id:40,src:'Tavolo 5',qr:true,status:'new',t:now-1*60e3,items:[{q:1,c:'100'},{q:1,c:'227'},{q:3,c:'B4'}],note:'Poco piccante'},
-  {id:37,src:'Tavolo 1',qr:true,status:'ready',t:now-16*60e3,items:[{q:2,c:'101'},{q:1,c:'213'}],note:''},
-];
+/* ---------- Stato locale della vista ---------- */
+const S = {view:'cliente', lang:'it', cat:'all', q:'', excl:new Set(), cart:new Map(), people:2, table:1, note:'', pick:{}, aq:'', qrTable:1, resetArm:false};
+const D = {orders:[], alerts:[], bookings:[], cfg:structuredClone(DEFAULT_CFG), mode:'loading', canWrite:true};
+const MINE_KEY='flowit-kungfu-myorders';
+function myOrders(){try{return JSON.parse(sessionStorage.getItem(MINE_KEY)||'[]');}catch(e){return [];}}
+function addMine(id){try{const a=myOrders();a.push(id);sessionStorage.setItem(MINE_KEY,JSON.stringify(a.slice(-5)));}catch(e){}}
 
 /* ---------- Utility ---------- */
 const $ = s=>document.querySelector(s);
-const eur = n=>'€ '+n.toFixed(2).replace('.',',');
-const esc = s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const eur = n=>'€ '+(+n).toFixed(2).replace('.',',');
+const esc = s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const priceOf = (m,v)=>{ if(m.v){const x=m.v.find(o=>o[0]===v)||m.v[0];return x[1];} return m.p; };
 const nameP = m=> S.lang==='zh' && m.z ? m.z : m.n;
 const nameS = m=> S.lang==='zh' && m.z ? m.n : (m.z||'');
+const soldOut = c=> D.cfg.soldOut.includes(c);
 let toastT;
-function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600);}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2800);}
 function minsAgo(t){return Math.max(0,Math.floor((Date.now()-t)/60e3));}
+function startOfToday(){const d=new Date();d.setHours(0,0,0,0);return d.getTime();}
+
+/* =====================================================================
+   Archivio dati: database condiviso dell'artifact (live su tutti i
+   dispositivi) oppure, se non disponibile, memoria di questo dispositivo.
+   ===================================================================== */
+const Store = {
+  db:null,
+  async init(){
+    let db=null, user=null;
+    try{ db = window.claude ? await window.claude.use('db') : null; }catch(e){ db=null; }
+    try{ user = window.claude ? await window.claude.use('user') : null; }catch(e){ user=null; }
+    if(!db){ D.mode='local'; onData(); return; }
+    this.db=db;
+    if(user && user.can){ try{ const w=await user.can('data.write'); if(w===false) D.canWrite=false; }catch(e){} }
+    let confirmed=false;
+    const timer=setTimeout(()=>{ if(!confirmed){ D.mode='stale'; onData(); } },10000);
+    const ok=s=>{ if(!s.metadata.fromCache){ confirmed=true; clearTimeout(timer); if(D.mode!=='readonly') D.mode='live'; } };
+    const fail=e=>{ clearTimeout(timer); D.mode= e && e.code==='revoked' ? 'local' : 'stale'; onData(); };
+    db.collection('orders').onSnapshot(s=>{ ok(s); D.orders=s.docs.map(d=>({...d.data(),_id:d.id})).sort((a,b)=>b.t-a.t); onData(); }, fail);
+    db.collection('alerts').onSnapshot(s=>{ ok(s); D.alerts=s.docs.map(d=>({...d.data(),_id:d.id})).sort((a,b)=>a.t-b.t); onData(); }, fail);
+    db.collection('bookings').onSnapshot(s=>{ ok(s); D.bookings=s.docs.map(d=>({...d.data(),_id:d.id})).sort((a,b)=>String(a.time).localeCompare(String(b.time))); onData(); }, fail);
+    db.doc('config/menu').onSnapshot(s=>{ ok(s); const v=s.exists?s.data():null; D.cfg = v ? {soldOut:Array.isArray(v.soldOut)?v.soldOut:[], lunch:{...DEFAULT_CFG.lunch,...(v.lunch||{})}} : structuredClone(DEFAULT_CFG); onData(); }, fail);
+  },
+  _q:Promise.resolve(),
+  _run(fn){ // una scrittura alla volta
+    this._q = this._q.then(fn).catch(e=>{
+      if(e && e.code==='invalid_argument'){ D.canWrite=false; D.mode='readonly'; toast('Questo account può solo vedere i dati: chiedi al titolare l’accesso come Contributor.'); }
+      else if(e && e.code==='quota_exceeded'){ toast('Archivio pieno: svuota gli ordini vecchi dal pannello Titolare.'); }
+      else { toast('Salvataggio non riuscito, riprova tra poco.'); }
+      onData();
+    });
+    return this._q;
+  },
+  newId(p){ return p+Date.now().toString(36)+Math.random().toString(36).slice(2,6); },
+  addOrder(o){ const id=this.newId('o'); o._id=id;
+    if(this.db) return this._run(()=>this.db.collection('orders').doc(id).set(strip(o)));
+    D.orders.unshift(o); onData(); return Promise.resolve(); },
+  setStatus(id,status){ const o=D.orders.find(x=>x._id===id); if(o) o.status=status; onData();
+    if(this.db) return this._run(()=>this.db.doc('orders/'+id).update({status, ['t_'+status]:Date.now()})); },
+  addAlert(txt){ const a={txt,t:Date.now(),_id:this.newId('a')};
+    if(this.db) return this._run(()=>this.db.collection('alerts').doc(a._id).set(strip(a)));
+    D.alerts.push(a); onData(); },
+  ackAlert(id){ D.alerts=D.alerts.filter(a=>a._id!==id); onData();
+    if(this.db) return this._run(()=>this.db.doc('alerts/'+id).delete()); },
+  addBooking(b){ b._id=this.newId('b');
+    if(this.db) return this._run(()=>this.db.collection('bookings').doc(b._id).set(strip(b)));
+    D.bookings.push(b); D.bookings.sort((x,y)=>x.time.localeCompare(y.time)); onData(); },
+  delBooking(id){ D.bookings=D.bookings.filter(b=>b._id!==id); onData();
+    if(this.db) return this._run(()=>this.db.doc('bookings/'+id).delete()); },
+  saveCfg(){ const cfg=structuredClone(D.cfg); onData();
+    if(this.db) return this._run(()=>this.db.doc('config/menu').set(cfg)); },
+  async reset(){
+    const all=[...D.orders.map(o=>'orders/'+o._id),...D.alerts.map(a=>'alerts/'+a._id),...D.bookings.map(b=>'bookings/'+b._id)];
+    if(!this.db){ D.orders=[];D.alerts=[];D.bookings=[]; onData(); return; }
+    for(const p of all){ await this._run(()=>this.db.doc(p).delete()); }
+  },
+};
+function strip(o){const c={...o};delete c._id;return JSON.parse(JSON.stringify(c));}
 
 /* ---------- Router ---------- */
 const VIEWS=['cliente','cucina','titolare','proposta'];
-function route(){const h=location.hash.replace('#','');S.view=VIEWS.includes(h)?h:'cliente';render();window.scrollTo(0,0);}
+function route(){
+  const h=location.hash.replace('#','');
+  const m=h.match(/^tavolo-(\d{1,2})$/);
+  if(m){ S.table=Math.min(99,Math.max(1,+m[1])); S.view='cliente'; }
+  else S.view=VIEWS.includes(h)?h:'cliente';
+  renderView(); window.scrollTo(0,0);
+}
 window.addEventListener('hashchange',route);
 
-function render(){
+function renderView(){
   document.querySelectorAll('.tabbar a').forEach(a=>{ if(a.dataset.v===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
   $('#langBtn').hidden = S.view!=='cliente';
   ({cliente:renderClient,cucina:renderKDS,titolare:renderOwner,proposta:renderProposal})[S.view]();
-  updateCartBar(); updateBadge();
+  renderChrome();
 }
-function updateBadge(){const n=S.tickets.filter(t=>t.status==='new').length+S.alerts.length;const b=$('#kdsBadge');b.textContent=n;b.hidden=!n;}
+/* aggiornamento dai dati, senza toccare i campi in cui si sta scrivendo */
+function onData(){
+  renderChrome();
+  if(S.view==='cliente'){ renderStatus(); renderDishes(); refreshSig(); }
+  else if(S.view==='cucina') renderKDS();
+  else if(S.view==='titolare') fillOwner();
+}
+function renderChrome(){
+  const n=D.orders.filter(t=>t.status==='new').length+D.alerts.length;
+  const b=$('#kdsBadge'); b.textContent=n; b.hidden=!n;
+  const sy=$('#sync');
+  const map={loading:['','Connessione…'],live:['live','Live su tutti i dispositivi'],local:['local','Solo questo dispositivo'],stale:['local','Dati non aggiornati'],readonly:['local','Sola lettura']};
+  const [cls,lab]=map[D.mode]||map.loading; sy.className='sync '+cls; sy.querySelector('span').textContent=lab;
+  let ban='';
+  if(D.mode==='local') ban='<div class="banner">Il database condiviso non è disponibile su questa vista: ordini e prenotazioni restano su questo dispositivo finché non riapri la pagina da claude.ai con il tuo account.</div>';
+  else if(D.mode==='stale') ban='<div class="banner">Non riesco a raggiungere il database in questo momento: quello che vedi potrebbe non essere aggiornato.</div>';
+  else if(D.mode==='readonly'||!D.canWrite) ban='<div class="banner">Questo account può vedere i dati ma non modificarli. Il titolare può darti accesso come Contributor dal menu Condividi.</div>';
+  $('#banner').innerHTML=ban;
+  updateCartBar();
+}
 
-/* ---------- Vista cliente ---------- */
+/* =============================== CLIENTE =============================== */
 function renderClient(){
-  const v=$('#view');
-  v.innerHTML=`<div class="col stack">
+  $('#view').innerHTML=`<div class="col stack">
     <section class="resto">
-      <div class="seal" aria-hidden="true">功夫</div>
+      <div class="seal" aria-hidden="true">${RESTAURANT.seal}</div>
       <div>
-        <h1>Kung Fu Sapori <span class="han" style="font-size:.9em;color:var(--cinnabar)">功夫美食</span></h1>
-        <div class="meta"><span><span class="stars">★★★★★</span> 5,0 · 67 recensioni Google</span><span>Corso Raffaello 0/C, Torino</span></div>
+        <h1>${RESTAURANT.name} <span class="han" style="font-size:.9em;color:var(--cinnabar)">${RESTAURANT.zh}</span></h1>
+        <div class="meta"><span><span class="stars">★★★★★</span> ${RESTAURANT.rating} · ${RESTAURANT.reviews} recensioni Google</span><span>${RESTAURANT.address}</span></div>
       </div>
     </section>
     <div class="row" style="justify-content:space-between;flex-wrap:wrap">
       <span class="table-pill">Stai ordinando al <b>Tavolo ${S.table}</b></span>
-      <span class="note">QR scansionato · nessuna app da installare</span>
+      <button class="icon-btn" type="button" data-act="table">Cambia tavolo</button>
     </div>
-    <div id="myStatus"></div>
+    <div id="myStatus" class="stack" style="gap:8px"></div>
     <div class="quick">
       <button type="button" data-act="waiter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>Chiama cameriere</button>
       <button type="button" data-act="bill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h4"/></svg>Chiedi il conto</button>
       <button type="button" data-act="book"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Prenota tavolo</button>
     </div>
-
     <section class="stack" aria-labelledby="sigH">
       <div class="row" style="justify-content:space-between"><h2 id="sigH">I piatti della casa</h2><span class="han muted">功夫招牌</span></div>
-      <div class="sig-scroll">
-        ${sigCard('300','','烤','Anatra pechinese','Il piatto che i clienti citano di più nelle recensioni.','Metà € 32 · Intera € 59')}
-        ${sigCard('100','jade','饭','Riso Kung Fu','Il riso saltato firmato dalla cucina.',eur(15))}
-        ${sigCard('200','gold','面','Pasta Kung Fu','Gli spaghetti della casa.',eur(12))}
-      </div>
+      <div class="sig-scroll" id="sig"></div>
     </section>
-
-    <section class="lunch">
-      <div class="stack" style="gap:4px">
-        <span class="eyebrow">A pranzo · 午餐</span>
-        <h3>Menu pranzo componibile</h3>
-        <p class="note">Il cliente vede solo i piatti davvero inclusi e sceglie in 3 tocchi.</p>
-      </div>
-      <div class="stack" style="align-items:flex-end;gap:6px"><span class="p num">${eur(LUNCH.price)}</span><button class="btn" type="button" data-act="lunch">Componi</button></div>
-    </section>
-
+    <section class="lunch" id="lunchCard"></section>
     <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="Cerca: xiaolongbao, gamberi, 鸭…" value="${esc(S.q)}" aria-label="Cerca nel menu"></div>
-    <div class="chips" id="catChips" role="toolbar" aria-label="Categorie">
+    <div class="chips" role="toolbar" aria-label="Categorie">
       <button class="chip" type="button" data-cat="all" aria-pressed="${S.cat==='all'}">Tutto</button>
       ${CATS.map(c=>`<button class="chip" type="button" data-cat="${c.k}" aria-pressed="${S.cat===c.k}">${S.lang==='zh'?c.zh:c.it}</button>`).join('')}
     </div>
     <details class="allerg" ${S.excl.size?'open':''}>
-      <summary><span>Allergie o intolleranze?${S.excl.size?` <span class="pill warn">${S.excl.size} esclusi</span>`:''}</span><span class="muted" aria-hidden="true">▾</span></summary>
+      <summary><span id="alSum"></span><span class="muted" aria-hidden="true">▾</span></summary>
       <div class="chips">${Object.entries(AL).map(([k,l])=>`<button type="button" class="chip al" data-al="${k}" aria-pressed="${S.excl.has(k)}">${l}</button>`).join('')}</div>
-      <p class="note" style="margin-top:8px">Tocca un allergene per nascondere i piatti che lo contengono. Come da menu: tutti i piatti possono contenere tracce di sesamo e soia e contengono glutammato. Allergeni per piatto inseriti a titolo indicativo per la demo, da confermare con la cucina.</p>
+      <p class="note" style="margin-top:8px">Tocca un allergene per nascondere i piatti che lo contengono. Tutti i piatti possono contenere tracce di sesamo e soia e contengono glutammato. Allergeni per piatto indicativi: da confermare con la cucina prima della messa in uso.</p>
     </details>
     <div id="dishList" class="stack"></div>
-    <p class="note" style="text-align:center">Coperto € 2,00 a persona. Alcuni ingredienti possono essere surgelati all'origine.</p>
+    <p class="note" style="text-align:center">Coperto ${eur(RESTAURANT.coperto)} a persona. Alcuni ingredienti possono essere surgelati all'origine.</p>
   </div>`;
-  renderStatus(); renderDishes();
   $('#q').addEventListener('input',e=>{S.q=e.target.value;renderDishes();});
+  renderAlSum(); refreshSig(); renderStatus(); renderDishes();
 }
-function sigCard(code,cls,g,t,p,price){
-  const out=S.soldOut.has(code);
-  return `<article class="sig ${cls}"><span class="big" aria-hidden="true">${g}</span>
+function renderAlSum(){const s=$('#alSum'); if(s) s.innerHTML=`Allergie o intolleranze?${S.excl.size?` <span class="pill warn">${S.excl.size} esclusi</span>`:''}`;}
+function refreshSig(){
+  const box=$('#sig'); if(!box) return;
+  const card=(code,cls,g,t,p,price)=>{const out=soldOut(code);return `<article class="sig ${cls}"><span class="big" aria-hidden="true">${g}</span>
     <span class="eyebrow" style="color:inherit;opacity:.8">N. ${code}</span><h3>${t}</h3><p>${p}</p>
-    <div class="foot"><span class="price num">${price}</span><button type="button" data-add="${code}" ${out?'disabled':''}>${out?'Esaurito':'Aggiungi'}</button></div></article>`;
+    <div class="foot"><span class="price num">${price}</span><button type="button" data-add="${code}" ${out?'disabled':''}>${out?'Esaurito':'Aggiungi'}</button></div></article>`;};
+  box.innerHTML=card('300','','烤','Anatra pechinese','Il piatto più citato nelle recensioni.','Metà € 32 · Intera € 59')
+    +card('100','jade','饭','Riso Kung Fu','Il riso saltato firmato dalla cucina.',eur(15))
+    +card('200','gold','面','Pasta Kung Fu','Gli spaghetti della casa.',eur(12));
+  const L=D.cfg.lunch; const lc=$('#lunchCard');
+  if(lc) lc.innerHTML=`<div class="stack" style="gap:4px"><span class="eyebrow">A pranzo · 午餐</span><h3>Menu pranzo</h3>
+      <p class="note">Primo, secondo e bevanda. Scegli tra ${L.primi.length+L.secondi.length} piatti inclusi.</p></div>
+    <div class="stack" style="align-items:flex-end;gap:6px"><span class="p num">${eur(L.price)}</span><button class="btn" type="button" data-act="lunch">Componi</button></div>`;
 }
 function visible(m){
   if(S.cat!=='all' && m.k!==S.cat) return false;
   if(S.excl.size && m.a.some(a=>S.excl.has(a))) return false;
-  if(S.q){const q=S.q.trim().toLowerCase(); if(q && !(m.n.toLowerCase().includes(q)||m.z.includes(q)||m.c.toLowerCase()===q)) return false;}
+  const q=S.q.trim().toLowerCase(); if(q && !(m.n.toLowerCase().includes(q)||m.z.includes(q)||m.c.toLowerCase()===q)) return false;
   return true;
 }
 function renderDishes(){
   const box=$('#dishList'); if(!box) return;
   const groups=CATS.map(c=>({c,items:MENU.filter(m=>m.k===c.k&&visible(m))})).filter(g=>g.items.length);
-  if(!groups.length){box.innerHTML=`<div class="empty">Nessun piatto corrisponde ai filtri. Prova a togliere un allergene o a cambiare ricerca.</div>`;return;}
-  box.innerHTML=groups.map(({c,items})=>`
-    <div class="cat-head" id="cat-${c.k}"><h2>${S.lang==='zh'?c.zh:c.it}</h2><span class="han">${S.lang==='zh'?c.it:c.zh}</span></div>
-    ${items.map(dishHTML).join('')}`).join('');
+  if(!groups.length){box.innerHTML=`<div class="empty">Nessun piatto corrisponde ai filtri. Togli un allergene o cambia ricerca.</div>`;return;}
+  box.innerHTML=groups.map(({c,items})=>`<div class="cat-head" id="cat-${c.k}"><h2>${S.lang==='zh'?c.zh:c.it}</h2><span class="han">${S.lang==='zh'?c.it:c.zh}</span></div>${items.map(dishHTML).join('')}`).join('');
 }
 function dishHTML(m){
-  const c=CAT[m.k]; const out=S.soldOut.has(m.c); const sel=S.pick[m.c]||(m.v?m.v[0][0]:'');
+  const c=CAT[m.k]; const out=soldOut(m.c); const sel=S.pick[m.c]||(m.v?m.v[0][0]:'');
   const p=m.v?priceOf(m,sel):m.p; const noPrice=p==null;
   const inCart=[...S.cart.values()].filter(x=>x.c===m.c).reduce((a,x)=>a+x.q,0);
   const tags=[]; if(m.f.includes('s'))tags.push('<span class="tag" style="color:var(--cinnabar)">Della casa</span>');
-  if(m.f.includes('h'))tags.push('<span class="tag hot">Piccante</span>'); if(m.f.includes('v')&&!['bev','birra','vino','bsp','dolci'].includes(m.k))tags.push('<span class="tag veg">Vegetariano</span>');
+  if(m.f.includes('h'))tags.push('<span class="tag hot">Piccante</span>');
+  if(m.f.includes('v')&&!['bev','birra','vino','bsp','dolci'].includes(m.k))tags.push('<span class="tag veg">Vegetariano</span>');
   if(m.u)tags.push(`<span class="tag">${m.u}</span>`); if(out)tags.push('<span class="tag out">Esaurito oggi</span>');
-  m.a.forEach(a=>tags.push(`<span class="tag" title="Allergene">${AL[a]}</span>`));
+  m.a.forEach(a=>tags.push(`<span class="tag">${AL[a]}</span>`));
   return `<article class="dish ${out?'off':''}">
-    <div class="tile" style="--c:var(${c.c})" aria-hidden="true"><span class="g">${c.g}</span><span class="code">${m.c.match(/^\d/)?m.c:''}</span></div>
+    <div class="tile" style="--c:var(${c.c})" aria-hidden="true"><span class="g">${c.g}</span><span class="code">${/^\d/.test(m.c)?m.c:''}</span></div>
     <div class="names"><div class="n1 ${S.lang==='zh'&&m.z?'han':''}">${nameP(m)}</div>${nameS(m)?`<div class="n2 ${S.lang!=='zh'?'han':''}">${nameS(m)}</div>`:''}
       ${m.d?`<div class="n2">${m.d}</div>`:''}
       ${m.v?`<div class="variants">${m.v.map(o=>`<button type="button" data-var="${m.c}|${o[0]}" aria-pressed="${o[0]===sel}">${o[0]}${m.v.some(x=>x[1]!==o[1])?' '+eur(o[1]).replace('€ ',''):''}</button>`).join('')}</div>`:''}
@@ -603,202 +702,262 @@ function dishHTML(m){
 }
 function renderStatus(){
   const box=$('#myStatus'); if(!box) return;
-  const t=S.tickets.find(x=>x.id===S.myTicket);
-  if(!t){box.innerHTML='';return;}
-  const lab={new:'Ricevuto dalla cucina',prep:'In preparazione',ready:'Pronto, sta arrivando al tavolo',done:'Servito. Buon appetito!'}[t.status];
-  box.innerHTML=`<div class="status-strip"><span class="dot ${t.status==='done'?'ready':t.status}"></span><div><b>Ordine #${t.id}</b> · ${lab}<div class="note">Aggiornato in tempo reale dallo schermo della cucina</div></div></div>`;
+  const mine=myOrders(); const list=D.orders.filter(o=>mine.includes(o._id)&&o.t>startOfToday());
+  const lab={new:'Ricevuto dalla cucina',prep:'In preparazione',ready:'Pronto, sta arrivando al tavolo',done:'Servito. Buon appetito!'};
+  box.innerHTML=list.slice(0,3).map(o=>`<div class="status-strip"><span class="dot ${o.status==='done'?'ready':o.status}"></span><div><b>Ordine #${o.n}</b> · ${lab[o.status]||''}<div class="note">Aggiornato in tempo reale dalla cucina</div></div></div>`).join('');
 }
 
-/* ---------- Carrello ---------- */
+/* Carrello */
 function addToCart(code,variant,extra){
   const m=BY[code]; if(!m) return;
   const v=variant||(m.v?(S.pick[code]||m.v[0][0]):'');
   const key=code+'|'+v+(extra?'|'+extra.desc:'');
   const cur=S.cart.get(key)||{c:code,v,q:0,price:extra?extra.price:priceOf(m,v),label:extra?extra.label:m.n,desc:extra?extra.desc:'',zh:m.z};
   cur.q++; S.cart.set(key,cur);
-  toast(`Aggiunto: ${cur.label}${v?' · '+v:''}`);
-  updateCartBar(); if(S.view==='cliente') renderDishes();
+  toast(`Aggiunto: ${cur.label}${v?' · '+v:''}`); updateCartBar(); if(S.view==='cliente') renderDishes();
 }
-function cartTotals(){const sub=[...S.cart.values()].reduce((a,x)=>a+x.q*x.price,0);const cop=S.cart.size?S.people*COPERTO:0;return{sub,cop,tot:sub+cop,n:[...S.cart.values()].reduce((a,x)=>a+x.q,0)};}
-function updateCartBar(){const {tot,n}=cartTotals();const bar=$('#cartbar');bar.hidden=!(n&&S.view==='cliente');$('#cartCnt').textContent=n;$('#cartTot').textContent=eur(tot);}
+function cartTotals(){const sub=[...S.cart.values()].reduce((a,x)=>a+x.q*x.price,0);const cop=S.cart.size?S.people*RESTAURANT.coperto:0;return{sub,cop,tot:sub+cop,n:[...S.cart.values()].reduce((a,x)=>a+x.q,0)};}
+function updateCartBar(){const {tot,n}=cartTotals();$('#cartbar').hidden=!(n&&S.view==='cliente');$('#cartCnt').textContent=n;$('#cartTot').textContent=eur(tot);}
 function openSheet(html){$('#sheetRoot').innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
   $('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeSheet();});}
 function closeSheet(){$('#sheetRoot').innerHTML='';}
 function cartSheet(){
-  const {sub,cop,tot,n}=cartTotals();
-  if(!n){closeSheet();return;}
+  const {sub,cop,tot,n}=cartTotals(); if(!n){closeSheet();return;}
   openSheet(`<div class="sheet-head"><div><span class="eyebrow">Tavolo ${S.table}</span><h2>Il tuo ordine</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
-    ${[...S.cart.entries()].map(([k,x])=>`<div class="line-item"><div><div style="font-weight:600">${esc(x.label)}${x.v?' · '+x.v:''}</div><div class="sub">${x.desc?esc(x.desc):(x.zh?`<span class="han">${x.zh}</span> · `:'')+eur(x.price)}</div></div>
+    ${[...S.cart.entries()].map(([k,x])=>`<div class="line-item"><div><div style="font-weight:600">${esc(x.label)}${x.v?' · '+esc(x.v):''}</div><div class="sub">${x.desc?esc(x.desc):(x.zh?`<span class="han">${x.zh}</span> · `:'')+eur(x.price)}</div></div>
       <div class="stepper"><button type="button" data-dec="${esc(k)}" aria-label="Togli uno">−</button><b class="num">${x.q}</b><button type="button" data-inc="${esc(k)}" aria-label="Aggiungi uno">+</button></div>
       <b class="num">${eur(x.q*x.price)}</b></div>`).join('')}
-    <div class="grid2"><label class="field">Persone al tavolo<select id="ppl">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i===S.people?'selected':''}>${i}</option>`).join('')}</select></label>
+    <div class="grid2"><label class="field">Persone al tavolo<select id="ppl">${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option ${i===S.people?'selected':''}>${i}</option>`).join('')}</select></label>
     <label class="field">Note per la cucina<input id="cnote" placeholder="Es. poco piccante" value="${esc(S.note)}"></label></div>
-    <div class="totals"><span>Piatti e bevande</span><span class="num">${eur(sub)}</span><span>Coperto (${S.people} × € 2,00)</span><span class="num">${eur(cop)}</span><span class="grand">Totale</span><span class="grand num">${eur(tot)}</span></div>
-    <button class="btn" type="button" data-act="send" style="padding:14px">Invia l'ordine in cucina</button>
-    <p class="note" style="text-align:center">Demo: nessun pagamento reale. In produzione si può pagare dal telefono o in cassa.</p>`);
+    <div class="totals"><span>Piatti e bevande</span><span class="num">${eur(sub)}</span><span>Coperto (${S.people} × ${eur(RESTAURANT.coperto)})</span><span class="num">${eur(cop)}</span><span class="grand">Totale</span><span class="grand num">${eur(tot)}</span></div>
+    <button class="btn" type="button" data-act="send" style="padding:14px" ${D.canWrite?'':'disabled'}>Invia l'ordine in cucina</button>
+    <p class="note" style="text-align:center">Il pagamento si fa in cassa o al tavolo.</p>`);
   $('#ppl').addEventListener('change',e=>{S.people=+e.target.value;cartSheet();});
   $('#cnote').addEventListener('input',e=>S.note=e.target.value);
 }
 function sendOrder(){
-  const id=++S.seq;
-  const items=[...S.cart.values()].map(x=>({q:x.q,c:x.c,v:x.v,desc:x.desc,label:x.label}));
-  S.tickets.unshift({id,src:'Tavolo '+S.table,qr:true,status:'new',t:Date.now(),items,note:S.note});
-  S.myTicket=id; S.cart.clear(); S.note=''; closeSheet(); render();
-  toast(`Ordine #${id} inviato. Apri la scheda Cucina per vederlo arrivare.`);
+  const {sub,cop,tot}=cartTotals();
+  const n=(D.orders.filter(o=>o.t>startOfToday()).reduce((a,o)=>Math.max(a,o.n||0),0))+1;
+  const o={n,table:S.table,src:'Tavolo '+S.table,qr:true,status:'new',t:Date.now(),people:S.people,note:S.note,
+    items:[...S.cart.values()].map(x=>({c:x.c,v:x.v||'',q:x.q,price:x.price,label:x.label,desc:x.desc||''})),subtotal:sub,coperto:cop,total:tot};
+  Store.addOrder(o); addMine(o._id);
+  S.cart.clear(); S.note=''; closeSheet(); updateCartBar(); renderDishes(); renderStatus();
+  toast(`Ordine #${n} inviato in cucina.`);
 }
 function lunchSheet(){
-  const grp=(key,title,list)=>`<div class="opt-group"><span class="eyebrow">${title}</span>${list.map((c,i)=>`<label class="opt"><input type="radio" name="${key}" value="${c}" ${i===0?'checked':''}>${BY[c].n}<span class="han">${BY[c].z}</span></label>`).join('')}</div>`;
-  openSheet(`<div class="sheet-head"><div><span class="eyebrow">Menu pranzo · ${eur(LUNCH.price)}</span><h2>Componi il tuo pranzo</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
-    ${grp('primo','1 · Primo',LUNCH.primi)}${grp('secondo','2 · Secondo',LUNCH.secondi)}${grp('bev','3 · Bevanda',LUNCH.bev)}
-    <p class="note">Composizione di esempio. Il ristorante decide piatti, giorni e orari dal pannello e può cambiarli ogni settimana.</p>
-    <button class="btn" type="button" data-act="lunchAdd" style="padding:14px">Aggiungi menu pranzo · ${eur(LUNCH.price)}</button>`);
+  const L=D.cfg.lunch;
+  const grp=(key,title,list)=>{const ok=list.filter(c=>BY[c]&&!soldOut(c));return `<div class="opt-group"><span class="eyebrow">${title}</span>${ok.length?ok.map((c,i)=>`<label class="opt"><input type="radio" name="${key}" value="${c}" ${i===0?'checked':''}>${BY[c].n}<span class="han">${BY[c].z}</span></label>`).join(''):'<div class="empty">Nessuna scelta disponibile oggi</div>'}</div>`;};
+  openSheet(`<div class="sheet-head"><div><span class="eyebrow">Menu pranzo · ${eur(L.price)}</span><h2>Componi il tuo pranzo</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
+    ${grp('primo','1 · Primo',L.primi)}${grp('secondo','2 · Secondo',L.secondi)}${grp('bev','3 · Bevanda',L.bev)}
+    <button class="btn" type="button" data-act="lunchAdd" style="padding:14px">Aggiungi menu pranzo · ${eur(L.price)}</button>`);
 }
 function bookSheet(){
-  openSheet(`<div class="sheet-head"><div><span class="eyebrow">Kung Fu Sapori</span><h2>Prenota un tavolo</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
+  const today=new Date().toISOString().slice(0,10);
+  openSheet(`<div class="sheet-head"><div><span class="eyebrow">${RESTAURANT.name}</span><h2>Prenota un tavolo</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
     <form id="bookForm" class="stack">
-      <div class="grid2"><label class="field">Orario<select id="bt">${['12:00','12:30','13:00','13:30','19:30','20:00','20:30','21:00','21:30'].map(t=>`<option ${t==='20:00'?'selected':''}>${t}</option>`).join('')}</select></label>
-      <label class="field">Persone<select id="bp">${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option ${i===2?'selected':''}>${i}</option>`).join('')}</select></label></div>
-      <label class="field">Nome<input id="bn" required placeholder="Il tuo nome" value="Cliente demo"></label>
+      <div class="grid2"><label class="field">Giorno<input id="bd" type="date" value="${today}" min="${today}" required></label>
+      <label class="field">Orario<select id="bt">${['12:00','12:30','13:00','13:30','19:00','19:30','20:00','20:30','21:00','21:30'].map(t=>`<option ${t==='20:00'?'selected':''}>${t}</option>`).join('')}</select></label></div>
+      <div class="grid2"><label class="field">Persone<select id="bp">${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option ${i===2?'selected':''}>${i}</option>`).join('')}</select></label>
+      <label class="field">Telefono<input id="bph" type="tel" placeholder="Per conferma" autocomplete="tel"></label></div>
+      <label class="field">Nome<input id="bn" required placeholder="Il tuo nome" autocomplete="name"></label>
       <label class="field">Richieste<input id="bnote" placeholder="Es. anatra intera, seggiolone, allergie"></label>
-      <button class="btn" type="submit" style="padding:14px">Conferma prenotazione</button>
-      <p class="note">La prenotazione arriva subito nel pannello del titolare. In produzione parte anche la conferma via WhatsApp o SMS.</p>
+      <button class="btn" type="submit" style="padding:14px" ${D.canWrite?'':'disabled'}>Conferma prenotazione</button>
     </form>`);
   $('#bookForm').addEventListener('submit',e=>{e.preventDefault();
-    S.bookings.push({t:$('#bt').value,name:$('#bn').value||'Cliente',p:+$('#bp').value,note:$('#bnote').value,src:'Online · nuova'});
-    S.bookings.sort((a,b)=>a.t.localeCompare(b.t)); closeSheet(); toast('Prenotazione inviata. La trovi nella scheda Titolare.');});
+    Store.addBooking({date:$('#bd').value,time:$('#bt').value,name:$('#bn').value.trim()||'Cliente',people:+$('#bp').value,phone:$('#bph').value.trim(),note:$('#bnote').value.trim(),src:'Online',t:Date.now()});
+    closeSheet(); toast('Prenotazione inviata al ristorante.');});
+}
+function tableSheet(){
+  openSheet(`<div class="sheet-head"><h2>Scegli il tavolo</h2><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
+    <div class="select-row">${Array.from({length:RESTAURANT.tables},(_,i)=>i+1).map(i=>`<button class="chip" type="button" data-settable="${i}" aria-pressed="${i===S.table}">Tavolo ${i}</button>`).join('')}</div>
+    <p class="note">Al ristorante il tavolo arriva già impostato dal QR code sul tavolo.</p>`);
 }
 
-/* ---------- Vista cucina (KDS) ---------- */
+/* =============================== CUCINA =============================== */
 function renderKDS(){
   const lanes=[['new','Nuovi'],['prep','In preparazione'],['ready','Pronti da servire']];
-  $('#view').innerHTML=`<div class="kds-head"><div><span class="eyebrow">Schermo cucina · tablet</span><h2>Comande in tempo reale</h2></div>
-    <span class="note">Tocca i pulsanti per far avanzare le comande. Il cliente vede lo stato sul suo telefono.</span></div>
-    ${S.alerts.length?`<div class="alerts" style="margin-bottom:12px">${S.alerts.map((a,i)=>`<div class="alert">${esc(a.txt)} · ${minsAgo(a.t)} min<button type="button" data-ack="${i}">Fatto</button></div>`).join('')}</div>`:''}
-    <div class="kds">${lanes.map(([st,lab])=>{const ts=S.tickets.filter(t=>t.status===st);return `<section class="lane"><div class="lane-h"><span>${lab}</span><span class="n">${ts.length}</span></div>
-      ${ts.length?ts.map(ticketHTML).join(''):`<div class="empty">Nessuna comanda</div>`}</section>`;}).join('')}</div>`;
+  const today=D.orders.filter(o=>o.status!=='done');
+  $('#view').innerHTML=`<div class="kds-head"><div><span class="eyebrow">Schermo cucina</span><h2>Comande</h2></div>
+    <span class="note">Si aggiorna da solo quando arriva un ordine. Il cliente vede lo stato sul suo telefono.</span></div>
+    ${D.alerts.length?`<div class="alerts" style="margin-bottom:12px">${D.alerts.map(a=>`<div class="alert">${esc(a.txt)} · ${minsAgo(a.t)} min<button type="button" data-ack="${a._id}">Fatto</button></div>`).join('')}</div>`:''}
+    <div class="kds">${lanes.map(([st,lab])=>{const ts=today.filter(t=>t.status===st).sort((a,b)=>a.t-b.t);return `<section class="lane"><div class="lane-h"><span>${lab}</span><span class="n">${ts.length}</span></div>
+      ${ts.length?ts.map(ticketHTML).join(''):`<div class="empty">${st==='new'?'In attesa di ordini. Ordina dalla scheda Cliente su un altro telefono e lo vedi comparire qui.':'Nessuna comanda'}</div>`}</section>`;}).join('')}</div>`;
 }
 function ticketHTML(t){
-  const m=minsAgo(t.t); const late=t.status!=='ready'&&m>=12;
-  const next={new:['Inizia','prep'],prep:['Pronto','ready'],ready:['Servito','done']}[t.status];
+  const m=minsAgo(t.t); const late=t.status!=='ready'&&m>=15;
+  const next={new:['Inizia','prep'],prep:['Pronto','ready'],ready:['Servito','done']}[t.status]||['Servito','done'];
   return `<article class="ticket ${t.status} ${late?'late':''}">
-    <div class="th"><span>#${t.id} · ${esc(t.src)}${t.qr?'<span class="src-qr">QR</span>':''}</span><span class="timer">${m} min</span></div>
-    <ul>${t.items.map(i=>{const mm=BY[i.c];return `<li><b>${i.q}×</b><span>${esc(i.label||mm.n)}${i.v?' · '+i.v:''}${i.desc?`<br><span class="note">${esc(i.desc)}</span>`:''} ${mm.z?`<span class="zh">${mm.z}</span>`:''}</span></li>`;}).join('')}</ul>
+    <div class="th"><span>#${t.n} · ${esc(t.src)}${t.qr?'<span class="src-qr">QR</span>':''}</span><span class="timer">${m} min</span></div>
+    <ul>${(t.items||[]).map(i=>{const mm=BY[i.c]||{n:i.label,z:''};return `<li><b>${i.q}×</b><span>${esc(i.label||mm.n)}${i.v?' · '+esc(i.v):''}${i.desc?`<br><span class="note">${esc(i.desc)}</span>`:''} ${mm.z?`<span class="zh">${mm.z}</span>`:''}</span></li>`;}).join('')}</ul>
     ${t.note?`<div class="tn">Nota: ${esc(t.note)}</div>`:''}
-    <div class="tf"><button class="btn ${t.status==='ready'?'ghost':''}" type="button" data-adv="${t.id}|${next[1]}">${next[0]}</button></div></article>`;
+    <div class="tf"><button class="btn ${t.status==='ready'?'ghost':''}" type="button" data-adv="${t._id}|${next[1]}" ${D.canWrite?'':'disabled'}>${next[0]}</button></div></article>`;
 }
 
-/* ---------- Vista titolare ---------- */
+/* =============================== TITOLARE =============================== */
 const REVIEWS=[
-  {who:'Serene D.',r:4,when:'1 settimana fa',lang:'en',txt:'Menu pranzo conveniente, ma la foto del maiale in agrodolce non era tra le scelte del menu da 12,90 €. Anatra pechinese ben preparata, riso cantonese non troppo unto. Posto promettente.',done:true,reply:'Grazie per essere tornata! Ci scusiamo per l’incomprensione sulla foto del menu pranzo…'},
-  {who:'dinn n.',r:5,when:'3 giorni fa',lang:'en',txt:'Ci siamo andati due volte, il cibo ci è piaciuto molto e il personale era cordiale.',done:true,reply:'Grazie mille per le 5 stelle e per essere tornato a trovarci!…'},
-  {who:'Ye A.',r:5,when:'2 giorni fa',lang:'zh',txt:'新开的中餐馆味道不错，值得推荐',done:true,reply:'谢谢你的认可👍'},
-  {who:'Perhindole',r:5,when:'1 settimana fa',lang:'it',txt:'Domenica a pranzo, camerieri molto disponibili. Ottima la carne brasata, da provare assolutamente l’anatra alla pechinese.',done:true,reply:'Grazie di cuore per le 5 stelle e per la splendida recensione!…'},
-  {who:'Nuova recensione (esempio)',r:5,when:'adesso',lang:'it',txt:'Xiaolongbao spettacolari e servizio velocissimo. Abbiamo ordinato dal QR al tavolo, comodissimo!',done:false,
-   draft:'Grazie di cuore per le 5 stelle! Siamo felici che gli xiaolongbao vi siano piaciuti e che ordinare dal tavolo sia stato comodo. La prossima volta provate l’anatra pechinese: vi aspettiamo in Corso Raffaello!'},
+  {who:'Serene D.',r:4,when:'1 settimana fa',lang:'en',txt:'Menu pranzo conveniente, ma la foto del maiale in agrodolce non era tra le scelte del menu da 12,90 €. Anatra pechinese ben preparata, riso cantonese non troppo unto. Posto promettente.',reply:'Grazie per essere tornata! Ci scusiamo per l’incomprensione sulla foto del menu pranzo…'},
+  {who:'dinn n.',r:5,when:'3 giorni fa',lang:'en',txt:'Ci siamo andati due volte, il cibo ci è piaciuto molto e il personale era cordiale.',reply:'Grazie mille per le 5 stelle e per essere tornato a trovarci!…'},
+  {who:'Ye A.',r:5,when:'2 giorni fa',lang:'zh',txt:'新开的中餐馆味道不错，值得推荐',reply:'谢谢你的认可👍'},
+  {who:'Perhindole',r:5,when:'1 settimana fa',lang:'it',txt:'Domenica a pranzo, camerieri molto disponibili. Ottima la carne brasata, da provare assolutamente l’anatra alla pechinese.',reply:'Grazie di cuore per le 5 stelle e per la splendida recensione!…'},
 ];
 function renderOwner(){
-  const live=S.tickets.filter(t=>t.status!=='done').length;
-  const hours=[['12',14],['13',22],['14',9],['15',3],['19',6],['20',19],['21',24],['22',11]];
-  const max=26,W=320,H=120,bw=(W-22)/hours.length;
-  const chart=`<svg viewBox="0 0 ${W} ${H+22}" role="img" aria-label="Ordini per fascia oraria, dati di esempio">
-    ${[0,10,20].map(v=>{const y=H-v/max*H;return `<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${W}" y="${y-3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}</text>`;}).join('')}
-    ${hours.map(([h,n],i)=>{const bh=n/max*H,x=i*bw+bw*.2;return `<rect x="${x}" y="${H-bh}" width="${bw*.6}" height="${bh}" rx="3" fill="${n>=20?'var(--jade)':'color-mix(in oklab,var(--jade) 45%,var(--surface))'}"/><text x="${x+bw*.3}" y="${H+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${h}</text>`;}).join('')}
-  </svg>`;
-  const top=[['Anatra pechinese','300',31],['Xiaolongbao','108',27],['Ravioli di carne brasati','102',22],['Riso Kung Fu','100',18],['Pollo imperiale','234',15]];
   $('#view').innerHTML=`<div class="stack">
-    <div class="kds-head"><div><span class="eyebrow">Pannello titolare</span><h2>Oggi da Kung Fu Sapori</h2></div><span class="demo-flag">Numeri di esempio</span></div>
-    <div class="kpis">
-      <div class="kpi"><div class="l">Incasso di oggi</div><div class="v">€ 1.284</div><div class="d">+12% vs sabato scorso</div></div>
-      <div class="kpi"><div class="l">Coperti</div><div class="v num">63</div><div class="d">pranzo 24 · cena 39</div></div>
-      <div class="kpi"><div class="l">Scontrino medio</div><div class="v num">€ 20,40</div><div class="d">+€ 2,10 con QR</div></div>
-      <div class="kpi"><div class="l">Comande aperte</div><div class="v num">${live}</div><div class="d" style="color:var(--muted)">dal vivo</div></div>
-    </div>
+    <div class="kds-head"><div><span class="eyebrow">Pannello titolare</span><h2>Oggi da ${RESTAURANT.name}</h2></div><span class="note" id="todayLbl"></span></div>
+    <div class="kpis" id="kpis"></div>
     <div class="owner-grid">
       <div class="stack">
-        <section class="panel"><div class="panel-h"><h3>Ordini per ora</h3><span class="note">picco 21:00</span></div><div class="chart">${chart}</div></section>
-        <section class="panel"><div class="panel-h"><h3>Recensioni Google</h3><span class="pill ok">5,0 ★ · 67</span></div>
-          <p class="note">Rispondete già a tutte le recensioni. FlowIt prepara una bozza nella lingua del cliente: voi la controllate e la pubblicate.</p>
-          ${REVIEWS.map((r,i)=>`<div class="review"><div class="who"><span>${esc(r.who)}</span><span class="stars">${'★'.repeat(r.r)}<span class="muted">${'★'.repeat(5-r.r)}</span></span></div>
-            <div class="txt ${r.lang==='zh'?'han':''}">${esc(r.txt)}</div><div class="note">${r.when}</div>
-            ${r.done||S.replied.has(i)?`<div class="reply">${esc(r.reply||r.draft)}</div><span class="pill ok" style="align-self:flex-start">Risposto</span>`:
-            `<label class="eyebrow" for="draft${i}">Bozza di risposta</label><textarea id="draft${i}">${esc(r.draft)}</textarea><button class="btn" type="button" data-reply="${i}" style="align-self:flex-start">Pubblica risposta</button>`}</div>`).join('')}
+        <section class="panel"><div class="panel-h"><h3>Ordini per ora</h3><span class="note" id="peak"></span></div><div class="chart" id="chart"></div></section>
+        <section class="panel"><div class="panel-h"><h3>Piatti più ordinati oggi</h3></div><div id="top"></div></section>
+        <section class="panel"><div class="panel-h"><h3>Menu pranzo</h3><span class="note">quello che vede il cliente</span></div><div id="lunchEd"></div></section>
+        <section class="panel"><div class="panel-h"><h3>Recensioni Google</h3><span class="pill ok">${RESTAURANT.rating} ★ · ${RESTAURANT.reviews}</span></div>
+          <p class="note">Ultime recensioni pubbliche. Collegando la scheda Google, FlowIt prepara la bozza di risposta nella lingua del cliente.</p>
+          ${REVIEWS.map(r=>`<div class="review"><div class="who"><span>${esc(r.who)}</span><span class="stars">${'★'.repeat(r.r)}<span class="muted">${'★'.repeat(5-r.r)}</span></span></div>
+            <div class="txt ${r.lang==='zh'?'han':''}">${esc(r.txt)}</div><div class="note">${r.when}</div><div class="reply">${esc(r.reply)}</div></div>`).join('')}
         </section>
       </div>
       <div class="stack">
-        <section class="panel"><div class="panel-h"><h3>Prenotazioni di oggi</h3><span class="note">${S.bookings.reduce((a,b)=>a+b.p,0)} persone</span></div>
-          <div>${S.bookings.map(b=>`<div class="book"><span class="t">${b.t}</span><div><b>${esc(b.name)}</b> · ${b.p} pers.${b.note?`<div class="note">${esc(b.note)}</div>`:''}</div><span class="pill ${b.src.includes('nuova')?'warn':'ok'}">${esc(b.src)}</span></div>`).join('')}</div>
-        </section>
-        <section class="panel"><div class="panel-h"><h3>Piatti più ordinati</h3><span class="note">ultimi 7 giorni</span></div>
-          <ul class="top-list">${top.map(([n,c,q])=>`<li><span>${n} <span class="han muted">${BY[c].z}</span></span><b class="num">${q}</b><span class="bar"><i style="width:${q/31*100}%"></i></span></li>`).join('')}</ul>
-        </section>
+        <section class="panel"><div class="panel-h"><h3>Prenotazioni</h3><span class="note" id="bookSum"></span></div><div id="books"></div>
+          <button class="btn ghost" type="button" data-act="book" style="align-self:flex-start">Aggiungi prenotazione</button></section>
         <section class="panel"><div class="panel-h"><h3>Disponibilità piatti</h3><span class="note">si aggiorna subito sul menu</span></div>
-          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="aq" type="search" placeholder="Cerca un piatto" aria-label="Cerca un piatto"></div>
-          <div class="avail" id="avail"></div>
-        </section>
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="aq" type="search" placeholder="Cerca un piatto" aria-label="Cerca un piatto" value="${esc(S.aq)}"></div>
+          <div class="avail" id="avail"></div></section>
+        <section class="panel"><div class="panel-h"><h3>QR code dei tavoli</h3><span class="note">da stampare</span></div>
+          <div class="select-row" id="qrSel">${Array.from({length:RESTAURANT.tables},(_,i)=>i+1).map(i=>`<button class="chip" type="button" data-qr="${i}" aria-pressed="${i===S.qrTable}">${i}</button>`).join('')}</div>
+          <div class="qr-box"><div id="qr"></div><div class="lbl">Tavolo <span id="qrN">${S.qrTable}</span> · Ordina qui</div><div class="sub" id="qrUrl"></div></div></section>
+        <section class="panel"><div class="panel-h"><h3>Dati della demo</h3></div>
+          <p class="note">Cancella ordini, chiamate e prenotazioni per ripartire da zero prima di mostrarlo al cliente.</p>
+          <button class="btn ghost ${S.resetArm?'danger':''}" type="button" data-act="reset" style="align-self:flex-start" ${D.canWrite?'':'disabled'}>${S.resetArm?'Tocca di nuovo per cancellare tutto':'Svuota ordini e prenotazioni'}</button></section>
       </div>
     </div></div>`;
-  const drawAvail=q=>{$('#avail').innerHTML=MENU.filter(m=>!['bev','birra','vino'].includes(m.k)).filter(m=>!q||m.n.toLowerCase().includes(q)||m.z.includes(q)||m.c===q)
-    .map(m=>`<label><span class="mono muted" style="font-size:.75rem">${m.c}</span><span>${m.n}${S.soldOut.has(m.c)?' <span class="pill warn">esaurito</span>':''}</span><input class="switch" type="checkbox" data-avail="${m.c}" ${S.soldOut.has(m.c)?'':'checked'} aria-label="${esc(m.n)} disponibile"></label>`).join('');};
-  drawAvail(''); $('#aq').addEventListener('input',e=>drawAvail(e.target.value.trim().toLowerCase()));
+  $('#aq').addEventListener('input',e=>{S.aq=e.target.value.trim().toLowerCase();drawAvail();});
+  fillOwner(); drawQR();
+}
+function fillOwner(){
+  if(!$('#kpis')) return;
+  const t0=startOfToday(); const today=D.orders.filter(o=>o.t>=t0);
+  const inc=today.reduce((a,o)=>a+(+o.total||0),0); const cop=today.reduce((a,o)=>a+(+o.people||0),0);
+  const avg=today.length?inc/today.length:0; const open=D.orders.filter(o=>o.status!=='done').length;
+  $('#todayLbl').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long'});
+  const z=v=>v?'':' zero';
+  $('#kpis').innerHTML=`<div class="kpi"><div class="l">Incasso ordini</div><div class="v${z(inc)}">${eur(inc)}</div><div class="d" style="color:var(--muted)">${today.length} ordini oggi</div></div>
+    <div class="kpi"><div class="l">Coperti</div><div class="v num${z(cop)}">${cop}</div><div class="d" style="color:var(--muted)">dagli ordini al tavolo</div></div>
+    <div class="kpi"><div class="l">Scontrino medio</div><div class="v num${z(avg)}">${eur(avg)}</div><div class="d" style="color:var(--muted)">per ordine</div></div>
+    <div class="kpi"><div class="l">Comande aperte</div><div class="v num${z(open)}">${open}</div><div class="d" style="color:var(--muted)">${D.alerts.length} chiamate in sala</div></div>`;
+  // grafico per ora
+  const hours=[11,12,13,14,15,18,19,20,21,22,23]; const cnt=Object.fromEntries(hours.map(h=>[h,0]));
+  today.forEach(o=>{const h=new Date(o.t).getHours(); if(h in cnt) cnt[h]++; else { const near=hours.reduce((a,b)=>Math.abs(b-h)<Math.abs(a-h)?b:a); cnt[near]++; }});
+  const max=Math.max(4,...Object.values(cnt)); const W=320,H=110,bw=(W-22)/hours.length;
+  const ticks=[0,Math.round(max/2),max];
+  $('#chart').innerHTML=`<svg viewBox="0 0 ${W} ${H+22}" role="img" aria-label="Ordini di oggi per ora">
+    ${ticks.map(v=>{const y=H-v/max*H;return `<line x1="0" x2="${W-22}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${W}" y="${y+3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}</text>`;}).join('')}
+    ${hours.map((h,i)=>{const n=cnt[h],bh=n/max*H,x=i*bw+bw*.2;return `${n?`<rect x="${x}" y="${H-bh}" width="${bw*.6}" height="${bh}" rx="3" fill="var(--jade)"/>`:''}<text x="${x+bw*.3}" y="${H+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${h}</text>`;}).join('')}
+  </svg>${today.length?'':'<p class="note">Ancora nessun ordine oggi. Prova a ordinare dalla scheda Cliente.</p>'}`;
+  const pk=hours.reduce((a,b)=>cnt[b]>cnt[a]?b:a,hours[0]); $('#peak').textContent=cnt[pk]?`picco alle ${pk}:00`:'';
+  // top piatti
+  const agg={}; today.forEach(o=>(o.items||[]).forEach(i=>{const k=i.label||(BY[i.c]&&BY[i.c].n); agg[k]=(agg[k]||0)+i.q;}));
+  const top=Object.entries(agg).sort((a,b)=>b[1]-a[1]).slice(0,6); const tmax=top.length?top[0][1]:1;
+  $('#top').innerHTML=top.length?`<ul class="top-list">${top.map(([n,q])=>`<li><span>${esc(n)}</span><b class="num">${q}</b><span class="bar"><i style="width:${q/tmax*100}%"></i></span></li>`).join('')}</ul>`:'<p class="note">Compare qui appena arrivano i primi ordini.</p>';
+  // prenotazioni
+  const tot=D.bookings.reduce((a,b)=>a+(+b.people||0),0); $('#bookSum').textContent=D.bookings.length?`${D.bookings.length} · ${tot} persone`:'';
+  $('#books').innerHTML=D.bookings.length?D.bookings.map(b=>`<div class="book"><span class="t">${esc(b.time)}</span><div><b>${esc(b.name)}</b> · ${+b.people||0} pers.${b.date&&b.date!==new Date().toISOString().slice(0,10)?` · ${esc(new Date(b.date).toLocaleDateString('it-IT',{day:'numeric',month:'short'}))}`:''}${b.note?`<div class="note">${esc(b.note)}</div>`:''}${b.phone?`<div class="note mono">${esc(b.phone)}</div>`:''}</div><button class="x" type="button" data-delbook="${b._id}" aria-label="Rimuovi prenotazione di ${esc(b.name)}">×</button></div>`).join(''):'<p class="note">Nessuna prenotazione. Arrivano qui dal pulsante “Prenota tavolo” del cliente.</p>';
+  drawAvail(); drawLunchEd();
+  const ra=document.querySelector('[data-act="reset"]'); if(ra){ra.disabled=!D.canWrite;}
+}
+function drawAvail(){
+  const box=$('#avail'); if(!box) return; const q=S.aq;
+  box.innerHTML=MENU.filter(m=>!['bev','birra','vino'].includes(m.k)).filter(m=>!q||m.n.toLowerCase().includes(q)||m.z.includes(q)||m.c.toLowerCase()===q)
+    .map(m=>`<label><span class="mono muted" style="font-size:.75rem">${m.c}</span><span>${m.n}${soldOut(m.c)?' <span class="pill warn">esaurito</span>':''}</span><input class="switch" type="checkbox" data-avail="${m.c}" ${soldOut(m.c)?'':'checked'} ${D.canWrite?'':'disabled'} aria-label="${esc(m.n)} disponibile"></label>`).join('');
+}
+function drawLunchEd(){
+  const box=$('#lunchEd'); if(!box) return; const L=D.cfg.lunch;
+  if(box.contains(document.activeElement)) return; // non disturbare mentre si modifica
+  const list=(key,cats)=>`<div class="checks">${MENU.filter(m=>cats.includes(m.k)&&m.p!=null).map(m=>`<label><input type="checkbox" data-lunch="${key}|${m.c}" ${L[key].includes(m.c)?'checked':''} ${D.canWrite?'':'disabled'}>${m.n}</label>`).join('')}</div>`;
+  box.innerHTML=`<label class="field" style="max-width:160px">Prezzo (€)<input id="lprice" type="number" step="0.1" min="0" value="${L.price}" ${D.canWrite?'':'disabled'}></label>
+    <span class="eyebrow">Primi inclusi</span>${list('primi',['rice','brodo','salt'])}
+    <span class="eyebrow">Secondi inclusi</span>${list('secondi',['pollo','gamb','spec','cold','verd'])}
+    <span class="eyebrow">Bevande incluse</span>${list('bev',['bev'])}`;
+  $('#lprice').addEventListener('change',e=>{const v=parseFloat(e.target.value);if(!(v>=0))return;D.cfg.lunch.price=Math.round(v*100)/100;Store.saveCfg();toast('Prezzo del menu pranzo aggiornato.');});
+}
+function drawQR(){
+  const box=$('#qr'); if(!box) return; box.innerHTML='';
+  const url=RESTAURANT.url+'#tavolo-'+S.qrTable; $('#qrUrl').textContent=url; $('#qrN').textContent=S.qrTable;
+  if(window.QRCode){ try{ new QRCode(box,{text:url,width:180,height:180,colorDark:'#13201C',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M}); }catch(e){ box.textContent='QR non disponibile'; } }
+  else box.innerHTML='<p class="sub">Il generatore di QR non si è caricato.</p>';
 }
 
-/* ---------- Vista proposta ---------- */
+/* =============================== PROPOSTA =============================== */
 function renderProposal(){
   const rows=[
-    ['Locale aperto da poco in Corso Raffaello, già 5,0 ★ su 67 recensioni Google.','Una vetrina che trasforma le recensioni in prenotazioni: pagina del ristorante, menu e prenotazione online collegati alla scheda Google.','book'],
-    ['Nessun sito web collegato alla scheda Google.','Pagina web e menu digitale pronti in pochi giorni, con il vostro dominio o un link FlowIt.','cliente'],
-    ['Menu cartaceo di 16 pagine, oltre 130 voci, allergeni su una pagina separata.','Menu QR con ricerca, foto, filtro allergeni per piatto e disponibilità aggiornata in un clic.','cliente'],
-    ['Una cliente ha trovato confuso il menu pranzo da 12,90 € (foto di un piatto non incluso).','Menu pranzo componibile: il cliente vede solo i piatti inclusi e sceglie in 3 tocchi.','lunch'],
+    ['Locale aperto da poco in Corso Raffaello, già 5,0 ★ su 67 recensioni Google.','Prenotazione online collegata alla scheda Google: chi legge le recensioni prenota subito.','book'],
+    ['Nessun sito web collegato alla scheda Google.','Menu digitale e pagina del locale pronti subito, apribili da un link o dal QR.','cliente'],
+    ['Menu cartaceo di 16 pagine, oltre 130 voci, allergeni su una pagina separata.','Menu QR con ricerca, filtro allergeni per piatto e piatti esauriti nascosti in un tocco.','cliente'],
+    ['Una cliente ha trovato confuso il menu pranzo da 12,90 € (foto di un piatto non incluso).','Menu pranzo gestito dal titolare: il cliente vede solo i piatti inclusi e sceglie in 3 tocchi.','lunch'],
     ['Clienti italiani, cinesi e stranieri (recensioni in italiano, inglese e cinese).','Menu bilingue italiano · 中文, comande in cucina con il nome cinese del piatto.','cliente'],
-    ['Rispondete a mano a ogni recensione.','Bozze di risposta pronte nella lingua del cliente, da approvare con un tocco.','titolare'],
-    ['Piatti di punta da preordinare (anatra pechinese intera, pesce da 28 €).','Preordine in fase di prenotazione e comanda che arriva in cucina già con l’orario.','cucina'],
+    ['Ordini presi a voce e chiamate al cameriere in sala piena.','Ordine dal tavolo dritto allo schermo cucina, chiamata e richiesta del conto in un tocco.','cucina'],
+    ['Nessun dato su orari di punta e piatti più venduti.','Pannello del titolare con incasso, coperti, orari e piatti più ordinati, calcolati dagli ordini.','titolare'],
   ];
   $('#view').innerHTML=`<div class="col stack" style="gap:16px">
     <section class="prop-hero"><span class="eyebrow">Proposta FlowIt Pro</span>
-      <h1>Il vostro menu, gli ordini e le recensioni in <em>un solo flusso</em></h1>
-      <p class="muted">Demo costruita sul vostro menu reale e su quello che i clienti scrivono di voi online. Provate ogni schermata dalle schede in basso.</p></section>
+      <h1>Menu, ordini e cucina in <em>un solo flusso</em></h1>
+      <p class="muted">FlowIt è già configurato con il vostro menu reale. Le schede in basso sono il sistema funzionante, non immagini.</p></section>
+    <section class="panel"><h3>Provalo in 1 minuto</h3>
+      <div class="howto"><span>1. Apri questa pagina su <b>due telefoni</b>: uno sulla scheda <b>Cliente</b>, l'altro su <b>Cucina</b>.</span>
+      <span>2. Dal telefono Cliente aggiungi un piatto e tocca <b>Invia l'ordine in cucina</b>.</span>
+      <span>3. La comanda compare in Cucina. Tocca <b>Inizia</b> e poi <b>Pronto</b>: il telefono Cliente si aggiorna da solo.</span>
+      <span>4. Nella scheda <b>Titolare</b> vedi incasso e piatti più ordinati crescere.</span></div></section>
     <section class="stack"><h2>Cosa abbiamo visto, cosa cambia</h2>
-      <div class="fit">${rows.map(r=>`<div class="fit-row"><div class="seen"><span class="k">Oggi</span><p>${r[0]}</p></div><div class="does"><span class="k">Con FlowIt Pro</span><p>${r[1]}</p><button type="button" data-go="${r[2]}">Vedi nella demo</button></div></div>`).join('')}</div></section>
-    <section class="panel"><h3>Cosa include FlowIt Pro</h3>
-      <ul class="top-list" style="gap:6px">${['Menu digitale QR bilingue con allergeni','Ordini dal tavolo, chiamata cameriere e richiesta conto','Schermo cucina con tempi e stato delle comande','Menu pranzo e piatti del giorno gestiti dal titolare','Prenotazioni online con preordine','Bozze di risposta alle recensioni Google','Statistiche su incassi, orari e piatti più venduti'].map(x=>`<li style="grid-template-columns:20px 1fr"><span style="color:var(--jade);font-weight:700">✓</span><span>${x}</span></li>`).join('')}</ul></section>
+      <div class="fit">${rows.map(r=>`<div class="fit-row"><div class="seen"><span class="k">Oggi</span><p>${r[0]}</p></div><div class="does"><span class="k">Con FlowIt Pro</span><p>${r[1]}</p><button type="button" data-go="${r[2]}">Apri</button></div></div>`).join('')}</div></section>
     <section class="stack"><h2>Come partiamo</h2>
-      <ol class="steps"><li>Il menu completo è già caricato: lo rivediamo insieme e confermiamo prezzi e allergeni.</li><li>Fotografiamo i piatti principali e stampiamo i QR per i tavoli.</li><li>Formazione di sala e cucina: mezz'ora con il tablet della cucina.</li><li>Si va online, con assistenza nelle prime settimane.</li></ol></section>
+      <ol class="steps"><li>Il menu completo è già caricato: confermiamo insieme prezzi mancanti e allergeni.</li><li>Fotografiamo i piatti principali e stampiamo i QR dei tavoli dal pannello Titolare.</li><li>Mezz'ora di formazione per sala e cucina.</li><li>Si parte, con assistenza nelle prime settimane.</li></ol></section>
     <section class="panel"><h3>Piano e prezzo</h3><p class="muted">Da definire insieme in base al numero di tavoli e ai moduli scelti.</p></section>
-    <div class="sources"><span class="eyebrow">Fonti della demo</span><span>Menu “Kung Fu Sapori” fornito in PDF (16 pagine).</span><span>Scheda Google Maps “Kung Fu Ristorante”, Corso Raffaello 0/C, Torino: valutazione e recensioni pubbliche consultate il 14/11/2026.</span><span>Numeri del pannello titolare, comande e prenotazioni sono simulati.</span></div>
+    <div class="sources"><span class="eyebrow">Fonti</span><span>Menu “Kung Fu Sapori” in PDF (16 pagine).</span><span>Scheda Google Maps “Kung Fu Ristorante”, ${RESTAURANT.address}: valutazione e recensioni pubbliche al 14/11/2026.</span></div>
   </div>`;
 }
 
-/* ---------- Eventi ---------- */
+/* =============================== EVENTI =============================== */
 document.addEventListener('click',e=>{
-  const b=e.target.closest('button,[data-cat]'); if(!b) return;
-  const d=b.dataset;
+  const b=e.target.closest('button'); if(!b) return; const d=b.dataset;
   if(d.cat){S.cat=d.cat;renderClient();const el=document.getElementById('cat-'+d.cat);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});return;}
-  if(d.al){S.excl.has(d.al)?S.excl.delete(d.al):S.excl.add(d.al);b.setAttribute('aria-pressed',S.excl.has(d.al));renderDishes();const s=document.querySelector('details.allerg summary span');if(s)s.innerHTML=`Allergie o intolleranze?${S.excl.size?` <span class="pill warn">${S.excl.size} esclusi</span>`:''}`;return;}
-  if(d.var){const [c,v]=d.var.split('|');S.pick[c]=v;renderDishes();return;}
+  if(d.al){S.excl.has(d.al)?S.excl.delete(d.al):S.excl.add(d.al);b.setAttribute('aria-pressed',S.excl.has(d.al));renderDishes();renderAlSum();return;}
+  if(d.var){const i=d.var.indexOf('|');S.pick[d.var.slice(0,i)]=d.var.slice(i+1);renderDishes();return;}
   if(d.add){addToCart(d.add);return;}
-  if(d.inc||d.dec){const k=d.inc||d.dec;const x=S.cart.get(k);if(!x)return;x.q+=d.inc?1:-1;if(x.q<=0)S.cart.delete(k);updateCartBar();cartSheet();return;}
-  if(d.adv){const [id,st]=d.adv.split('|');const t=S.tickets.find(x=>x.id==id);if(t){t.status=st;if(st==='done'&&t.id!==S.myTicket)S.tickets=S.tickets.filter(x=>x!==t);}
-    toast(st==='prep'?`#${id} in preparazione`:st==='ready'?`#${id} pronto: il cliente lo vede sul telefono`:`#${id} servito`);renderKDS();updateBadge();return;}
-  if(d.ack){S.alerts.splice(+d.ack,1);renderKDS();updateBadge();return;}
-  if(d.reply){const i=+d.reply;REVIEWS[i].draft=$('#draft'+i).value;S.replied.add(i);renderOwner();toast('Risposta pronta. In produzione viene pubblicata su Google.');return;}
-  if(d.go){if(d.go==='lunch'){location.hash='cliente';setTimeout(lunchSheet,50);}else if(d.go==='book'){location.hash='cliente';setTimeout(bookSheet,50);}else location.hash=d.go;return;}
+  if(d.inc||d.dec){const k=d.inc||d.dec;const x=S.cart.get(k);if(!x)return;x.q+=d.inc?1:-1;if(x.q<=0)S.cart.delete(k);updateCartBar();renderDishes();cartSheet();return;}
+  if(d.adv){const i=d.adv.lastIndexOf('|');const id=d.adv.slice(0,i),st=d.adv.slice(i+1);const o=D.orders.find(x=>x._id===id);Store.setStatus(id,st);
+    toast(st==='prep'?`#${o?o.n:''} in preparazione`:st==='ready'?`#${o?o.n:''} pronto: il cliente lo vede sul telefono`:`#${o?o.n:''} servito`);return;}
+  if(d.ack){Store.ackAlert(d.ack);return;}
+  if(d.delbook){Store.delBooking(d.delbook);toast('Prenotazione rimossa.');return;}
+  if(d.settable){S.table=+d.settable;closeSheet();location.hash='tavolo-'+S.table;return;}
+  if(d.qr){S.qrTable=+d.qr;document.querySelectorAll('#qrSel .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.qr==d.qr));drawQR();return;}
+  if(d.go){if(d.go==='lunch'){location.hash='cliente';setTimeout(lunchSheet,60);}else if(d.go==='book'){location.hash='cliente';setTimeout(bookSheet,60);}else location.hash=d.go;return;}
   switch(d.act){
     case 'close':closeSheet();break;
     case 'send':sendOrder();break;
     case 'lunch':lunchSheet();break;
     case 'book':bookSheet();break;
-    case 'waiter':S.alerts.push({txt:`Tavolo ${S.table} chiama il cameriere`,t:Date.now()});updateBadge();toast('Il cameriere è stato avvisato.');break;
-    case 'bill':S.alerts.push({txt:`Tavolo ${S.table} chiede il conto`,t:Date.now()});updateBadge();toast('Richiesta del conto inviata alla sala.');break;
-    case 'lunchAdd':{const g=n=>document.querySelector(`input[name="${n}"]:checked`).value;const p=g('primo'),s=g('secondo'),bv=g('bev');
-      addToCart(p,'',{price:LUNCH.price,label:'Menu pranzo',desc:`${BY[p].n} + ${BY[s].n} + ${BY[bv].n}`});closeSheet();break;}
+    case 'table':tableSheet();break;
+    case 'waiter':Store.addAlert(`Tavolo ${S.table} chiama il cameriere`);toast('Il cameriere è stato avvisato.');break;
+    case 'bill':Store.addAlert(`Tavolo ${S.table} chiede il conto`);toast('Richiesta del conto inviata alla sala.');break;
+    case 'lunchAdd':{const g=n=>{const el=document.querySelector(`input[name="${n}"]:checked`);return el?el.value:null;};const p=g('primo'),s=g('secondo'),bv=g('bev');
+      if(!p||!s||!bv){toast('Scegli primo, secondo e bevanda.');break;}
+      addToCart(p,'',{price:D.cfg.lunch.price,label:'Menu pranzo',desc:`${BY[p].n} + ${BY[s].n} + ${BY[bv].n}`});closeSheet();break;}
+    case 'reset':
+      if(!S.resetArm){S.resetArm=true;b.classList.add('danger');b.textContent='Tocca di nuovo per cancellare tutto';setTimeout(()=>{S.resetArm=false;if(b.isConnected){b.classList.remove('danger');b.textContent='Svuota ordini e prenotazioni';}},4000);}
+      else {S.resetArm=false;b.disabled=true;b.textContent='Cancello…';Store.reset().then(()=>{toast('Dati svuotati: si riparte da zero.');if(S.view==='titolare')renderOwner();});}
+      break;
   }
 });
-document.addEventListener('change',e=>{const c=e.target.closest('[data-avail]');if(!c)return;const k=c.dataset.avail;c.checked?S.soldOut.delete(k):S.soldOut.add(k);
-  const lab=c.closest('label').children[1];lab.innerHTML=BY[k].n+(S.soldOut.has(k)?' <span class="pill warn">esaurito</span>':'');
-  toast(c.checked?`${BY[k].n}: di nuovo disponibile sul menu`:`${BY[k].n}: segnato come esaurito sul menu`);});
+document.addEventListener('change',e=>{
+  const c=e.target.closest('[data-avail]');
+  if(c){const k=c.dataset.avail;const set=new Set(D.cfg.soldOut);c.checked?set.delete(k):set.add(k);D.cfg.soldOut=[...set];Store.saveCfg();
+    toast(c.checked?`${BY[k].n}: di nuovo disponibile`:`${BY[k].n}: segnato come esaurito`);return;}
+  const l=e.target.closest('[data-lunch]');
+  if(l){const [key,code]=l.dataset.lunch.split('|');const arr=new Set(D.cfg.lunch[key]);l.checked?arr.add(code):arr.delete(code);D.cfg.lunch={...D.cfg.lunch,[key]:[...arr]};Store.saveCfg();toast('Menu pranzo aggiornato.');}
+});
 $('#openCart').addEventListener('click',cartSheet);
 $('#langBtn').addEventListener('click',()=>{S.lang=S.lang==='it'?'zh':'it';$('#langBtn').textContent=S.lang==='it'?'IT · 中文':'中文 · IT';renderClient();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
-setInterval(()=>{if(S.view==='cucina'&&!$('#sheetRoot').innerHTML)renderKDS(); if(S.view==='cliente')renderStatus();},30e3);
+setInterval(()=>{if(S.view==='cucina')renderKDS();},30e3);
+
 route();
+Store.init();
 </script>
