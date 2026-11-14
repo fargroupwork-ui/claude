@@ -1,0 +1,804 @@
+<title>FlowIt Pro · Kung Fu Sapori</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700&family=Noto+Serif+SC:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: phone-first app shell. Bottom tab bar switches four views (Cliente, Cucina, Titolare, Proposta);
+   the customer menu is a single 560px column, staff views widen into grids on desktop. */
+:root{
+  --bg:#F2F5F3; --surface:#FFFFFF; --surface-2:#E8EEEB; --ink:#13201C; --muted:#5A6A65; --line:#D9E1DD;
+  --jade:#0D6A5B; --jade-ink:#FFFFFF; --cinnabar:#BF3428; --gold:#A87A1F; --plum:#7A3E6A;
+  --ok:#1F7A4D; --warn:#B36B00; --crit:#B3261E;
+  --shadow:0 1px 2px rgba(19,32,28,.06),0 6px 20px rgba(19,32,28,.06);
+  --f-display:"Sora",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-han:"Noto Serif SC","Songti SC","SimSun",serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --tab-h:64px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1412; --surface:#16201C; --surface-2:#1E2A26; --ink:#E6EEEA; --muted:#93A49E; --line:#283632;
+  --jade:#3DB39A; --jade-ink:#06201A; --cinnabar:#E35A4C; --gold:#D8A847; --plum:#C27BB0;
+  --ok:#4CC28A; --warn:#E0A040; --crit:#F0675C; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1412; --surface:#16201C; --surface-2:#1E2A26; --ink:#E6EEEA; --muted:#93A49E; --line:#283632;
+  --jade:#3DB39A; --jade-ink:#06201A; --cinnabar:#E35A4C; --gold:#D8A847; --plum:#C27BB0;
+  --ok:#4CC28A; --warn:#E0A040; --crit:#F0675C; --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 calc(var(--tab-h) + 24px + env(safe-area-inset-bottom,0px));-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--jade);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h2{font-size:1.25rem}
+h3{font-size:1rem}
+p{margin:0}
+.han{font-family:var(--f-han)}
+.mono{font-family:var(--f-mono)}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.eyebrow{font-size:.72rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.wrap{max-width:1100px;margin:0 auto}
+.col{max-width:560px;margin:0 auto}
+.stack{display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px;align-items:center}
+.demo-flag{display:inline-flex;align-items:center;gap:6px;font-size:.72rem;font-weight:600;color:var(--warn);
+  border:1px solid color-mix(in oklab,var(--warn) 45%,transparent);border-radius:999px;padding:2px 8px}
+
+/* top bar */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:14px 6px}
+.brand{display:flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:700;font-size:.95rem}
+.brand-mark{width:22px;height:22px;border-radius:6px;background:var(--jade);display:grid;place-items:center}
+.brand-mark svg{display:block}
+.brand small{font-weight:600;color:var(--jade);margin-left:2px}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 10px;font-size:.8rem;font-weight:600}
+
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+.tabbar nav{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);height:var(--tab-h)}
+.tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;text-decoration:none;color:var(--muted);font-size:.72rem;font-weight:600;position:relative}
+.tabbar a svg{width:22px;height:22px}
+.tabbar a[aria-current="page"]{color:var(--jade)}
+.tabbar a[aria-current="page"]::before{content:"";position:absolute;top:0;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--jade)}
+.tabbar .badge{position:absolute;top:8px;left:calc(50% + 6px);min-width:18px;height:18px;border-radius:9px;background:var(--cinnabar);color:#fff;font-size:.68rem;display:grid;place-items:center;padding:0 5px}
+
+/* restaurant hero */
+.resto{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center;padding-block:10px 4px}
+.seal{width:64px;height:64px;border-radius:12px;background:var(--cinnabar);color:#fff;display:grid;place-items:center;
+  font-family:var(--f-han);font-weight:700;font-size:1.35rem;line-height:1;writing-mode:vertical-rl;letter-spacing:.06em;box-shadow:var(--shadow)}
+.resto h1{font-size:1.45rem}
+.resto .meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.82rem;color:var(--muted);margin-top:2px}
+.stars{color:var(--gold);letter-spacing:1px}
+.table-pill{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:.8rem;font-weight:600}
+.table-pill b{color:var(--jade)}
+
+.status-strip{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:.88rem}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--muted)}
+.dot.new{background:var(--warn)} .dot.prep{background:var(--jade)} .dot.ready{background:var(--ok);box-shadow:0 0 0 4px color-mix(in oklab,var(--ok) 25%,transparent)}
+
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.quick button{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 6px;font-size:.8rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px}
+.quick svg{width:20px;height:20px;color:var(--jade)}
+
+/* signature */
+.sig-scroll{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(220px,78%);gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:4px;margin-inline:-2px;padding-inline:2px}
+.sig{scroll-snap-align:start;border-radius:16px;padding:14px;color:#fff;background:var(--cinnabar);display:flex;flex-direction:column;gap:6px;min-height:150px;position:relative;overflow:hidden}
+.sig.jade{background:var(--jade);color:var(--jade-ink)}
+.sig.gold{background:var(--gold)}
+.sig .big{font-family:var(--f-han);font-size:2.6rem;line-height:1;opacity:.22;position:absolute;right:10px;top:8px}
+.sig h3{font-size:1.05rem;max-width:80%}
+.sig p{font-size:.82rem;opacity:.9;max-width:85%}
+.sig .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.sig .price{font-family:var(--f-display);font-weight:700;font-size:1.1rem}
+.sig button{background:rgba(255,255,255,.95);color:#13201C;border:0;border-radius:999px;padding:6px 12px;font-weight:700;font-size:.82rem}
+
+.lunch{border:1.5px dashed color-mix(in oklab,var(--jade) 55%,transparent);border-radius:16px;padding:14px;background:color-mix(in oklab,var(--jade) 7%,var(--surface));display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.lunch .p{font-family:var(--f-display);font-weight:700;font-size:1.4rem;color:var(--jade)}
+.btn{border:0;border-radius:999px;padding:10px 16px;font-weight:700;font-size:.88rem;background:var(--jade);color:var(--jade-ink)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.btn.red{background:var(--cinnabar);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* filters */
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px}
+.search input{border:0;background:transparent;padding:11px 0;width:100%;outline:none}
+.search svg{width:18px;height:18px;color:var(--muted);flex:none}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.82rem;font-weight:600;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip.al[aria-pressed="true"]{background:var(--crit);border-color:var(--crit);color:#fff}
+details.allerg{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+details.allerg summary{cursor:pointer;font-weight:600;font-size:.88rem;list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.allerg summary::-webkit-details-marker{display:none}
+details.allerg .chips{flex-wrap:wrap;margin-top:10px;overflow:visible}
+.note{font-size:.76rem;color:var(--muted)}
+
+/* dishes */
+.cat-head{display:flex;align-items:baseline;gap:8px;padding-top:10px;scroll-margin-top:12px}
+.cat-head .han{font-size:1.1rem;color:var(--cinnabar)}
+.dish{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.dish.off{opacity:.5}
+.tile{width:52px;height:52px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  background:color-mix(in oklab,var(--c) 14%,var(--surface));color:var(--c)}
+.tile .g{font-family:var(--f-han);font-weight:700;font-size:1.3rem;line-height:1}
+.tile .code{font-family:var(--f-mono);font-size:.62rem;opacity:.85}
+.dish .names{min-width:0}
+.dish .n1{font-weight:600;font-size:.95rem;line-height:1.25}
+.dish .n2{font-size:.8rem;color:var(--muted);margin-top:1px}
+.dish .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tag{font-size:.68rem;font-weight:600;border-radius:6px;padding:1px 6px;background:var(--surface-2);color:var(--muted)}
+.tag.hot{background:color-mix(in oklab,var(--cinnabar) 15%,var(--surface));color:var(--cinnabar)}
+.tag.veg{background:color-mix(in oklab,var(--ok) 15%,var(--surface));color:var(--ok)}
+.tag.out{background:var(--ink);color:var(--bg)}
+.dish .right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.dish .price{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{width:34px;height:34px;border-radius:50%;border:0;background:var(--jade);color:var(--jade-ink);display:grid;place-items:center;font-size:1.2rem;font-weight:700;line-height:1}
+.add:disabled{background:var(--surface-2);color:var(--muted)}
+.qty-badge{font-size:.72rem;font-weight:700;color:var(--jade)}
+.variants{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.variants button{border:1px solid var(--line);background:transparent;border-radius:8px;padding:3px 8px;font-size:.76rem;font-weight:600}
+.variants button[aria-pressed="true"]{border-color:var(--jade);color:var(--jade);background:color-mix(in oklab,var(--jade) 10%,transparent)}
+.empty{text-align:center;padding:28px 12px;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
+
+/* cart bar + sheets */
+.cartbar{position:fixed;left:0;right:0;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 10px);z-index:25;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
+.cartbar button{pointer-events:auto;max-width:560px;margin:0 auto;width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;
+  border:0;border-radius:14px;padding:14px 16px;background:var(--ink);color:var(--bg);font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.cartbar .cnt{background:var(--jade);color:var(--jade-ink);border-radius:8px;padding:2px 8px;font-size:.8rem}
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(8,14,12,.5);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--bg);width:100%;max-width:560px;max-height:88%;overflow:auto;border-radius:20px 20px 0 0;
+  padding:18px max(16px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:14px}
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.close{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:1.1rem;line-height:1}
+.line-item{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.line-item .sub{font-size:.78rem;color:var(--muted)}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-weight:700;line-height:1}
+.totals{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:.9rem}
+.totals .grand{font-family:var(--f-display);font-weight:700;font-size:1.15rem;padding-top:6px;border-top:1px solid var(--line)}
+label.field{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:600;color:var(--muted)}
+.field input,.field select,.field textarea{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);font-weight:500;font-size:.95rem}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt-group{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:.9rem}
+.opt input{accent-color:var(--jade);width:18px;height:18px}
+.opt .han{color:var(--muted);font-size:.85rem;margin-left:auto}
+
+/* toast */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 80px);z-index:60;
+  background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.88rem;font-weight:600;max-width:calc(100% - 32px);box-shadow:var(--shadow);transition:opacity .2s}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* KDS */
+.kds-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding-block:10px}
+.alerts{display:flex;flex-wrap:wrap;gap:8px}
+.alert{display:flex;align-items:center;gap:8px;background:color-mix(in oklab,var(--cinnabar) 12%,var(--surface));color:var(--cinnabar);border:1px solid color-mix(in oklab,var(--cinnabar) 40%,transparent);border-radius:10px;padding:8px 10px;font-size:.85rem;font-weight:600}
+.alert button{border:0;background:var(--cinnabar);color:#fff;border-radius:8px;padding:3px 8px;font-size:.75rem;font-weight:700}
+.kds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+.lane{display:flex;flex-direction:column;gap:10px;min-width:0}
+.lane-h{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.85rem;padding:0 2px}
+.lane-h .n{font-family:var(--f-mono);color:var(--muted)}
+.ticket{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
+.ticket .th{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-family:var(--f-mono);font-weight:600;font-size:.85rem;border-bottom:1px dashed var(--line)}
+.ticket.new .th{background:color-mix(in oklab,var(--warn) 14%,var(--surface))}
+.ticket.prep .th{background:color-mix(in oklab,var(--jade) 14%,var(--surface))}
+.ticket.ready .th{background:color-mix(in oklab,var(--ok) 16%,var(--surface))}
+.ticket.late .timer{color:var(--crit)}
+.ticket ul{list-style:none;margin:0;padding:8px 12px;display:flex;flex-direction:column;gap:4px;font-size:.9rem}
+.ticket li{display:grid;grid-template-columns:28px 1fr;gap:6px}
+.ticket li b{font-family:var(--f-mono)}
+.ticket li .zh{font-family:var(--f-han);color:var(--muted);font-size:.85rem}
+.ticket .tn{font-size:.78rem;color:var(--warn);padding:0 12px 6px}
+.ticket .tf{display:flex;gap:8px;padding:8px 12px 12px}
+.ticket .tf .btn{flex:1;padding:8px 10px;font-size:.82rem}
+.src-qr{font-size:.65rem;border-radius:5px;padding:1px 5px;background:var(--jade);color:var(--jade-ink);margin-left:6px;font-family:var(--f-body);font-weight:700}
+
+/* owner */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.kpi .v{font-family:var(--f-display);font-weight:700;font-size:1.35rem;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:.78rem;color:var(--muted)}
+.kpi .d{font-size:.74rem;font-weight:600;color:var(--ok)}
+.owner-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chart svg{width:100%;height:auto;display:block}
+.top-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.top-list li{display:grid;grid-template-columns:1fr auto;gap:4px 10px;font-size:.88rem}
+.bar{grid-column:1/-1;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--jade);border-radius:3px}
+.review{border-top:1px solid var(--line);padding-top:10px;display:flex;flex-direction:column;gap:6px}
+.review:first-of-type{border-top:0;padding-top:0}
+.review .who{display:flex;justify-content:space-between;gap:8px;font-size:.85rem;font-weight:600}
+.review .txt{font-size:.88rem}
+.review .reply{font-size:.82rem;color:var(--muted);border-left:2px solid var(--jade);padding-left:8px}
+.review textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:.88rem;resize:vertical}
+.pill{font-size:.7rem;font-weight:700;border-radius:999px;padding:2px 8px}
+.pill.ok{background:color-mix(in oklab,var(--ok) 15%,transparent);color:var(--ok)}
+.pill.warn{background:color-mix(in oklab,var(--warn) 16%,transparent);color:var(--warn)}
+.avail{display:flex;flex-direction:column;gap:0;max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+.avail label{display:grid;grid-template-columns:44px 1fr auto;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--line);font-size:.86rem}
+.avail label:last-child{border-bottom:0}
+.switch{appearance:none;width:40px;height:24px;border-radius:12px;background:var(--surface-2);border:1px solid var(--line);position:relative;cursor:pointer;transition:background .15s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.3);transition:left .15s}
+.switch:checked{background:var(--jade);border-color:var(--jade)}
+.switch:checked::after{left:18px}
+.book{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:center;font-size:.88rem;padding:8px 0;border-top:1px solid var(--line)}
+.book:first-child{border-top:0}
+.book .t{font-family:var(--f-mono);font-weight:600}
+
+/* proposal */
+.prop-hero{padding-block:16px 8px;display:flex;flex-direction:column;gap:8px}
+.prop-hero h1{font-size:1.7rem}
+.prop-hero h1 em{font-style:normal;color:var(--cinnabar)}
+.fit{display:grid;gap:10px}
+.fit-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.fit-row > div{padding:12px 14px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.fit-row > div:first-child{border-right:1px solid var(--line)}
+.fit-row .k{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+.fit-row .seen .k{color:var(--muted)}
+.fit-row .does .k{color:var(--jade)}
+.fit-row p{font-size:.88rem}
+.fit-row button{align-self:flex-start;margin-top:4px;border:0;background:none;color:var(--jade);font-weight:700;font-size:.8rem;padding:0;text-decoration:underline;text-underline-offset:3px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:s}
+.steps li{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:start;font-size:.9rem;counter-increment:s}
+.steps li::before{content:counter(s);width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:.8rem}
+.sources{font-size:.78rem;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+
+@media (max-width:860px){
+  .kds{grid-template-columns:1fr}
+  .owner-grid{grid-template-columns:1fr}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:520px){
+  .fit-row{grid-template-columns:1fr}
+  .fit-row > div:first-child{border-right:0;border-bottom:1px solid var(--line)}
+}
+</style>
+
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M4 7c4 0 4 5 8 5s4-5 8-5M4 15c4 0 4 5 8 5s4-5 8-5"/></svg></span>FlowIt<small>Pro</small></div>
+    <div class="row"><span class="demo-flag">DEMO</span><button class="icon-btn" id="langBtn" type="button" aria-label="Cambia lingua del menu">IT · 中文</button></div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<div class="cartbar" id="cartbar" hidden><button type="button" id="openCart"><span class="row"><span class="cnt num" id="cartCnt">0</span><span>Vedi ordine</span></span><span class="num" id="cartTot">€ 0,00</span></button></div>
+
+<div class="tabbar"><nav aria-label="Viste demo">
+  <a href="#cliente" data-v="cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M10 18h4"/></svg>Cliente</a>
+  <a href="#cucina" data-v="cucina"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11h18M5 11a7 7 0 0 1 14 0M12 4V3M4 15h16l-1.5 5h-13z"/></svg>Cucina<span class="badge" id="kdsBadge" hidden>0</span></a>
+  <a href="#titolare" data-v="titolare"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Titolare</a>
+  <a href="#proposta" data-v="proposta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Proposta</a>
+</nav></div>
+
+<div id="sheetRoot"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ---------- Dati: menu reale di Kung Fu Sapori (功夫美食), Corso Raffaello 0/C, Torino ---------- */
+const CATS = [
+  {k:'sig',   zh:'功夫招牌', it:'Firma Kung Fu',          g:'功', c:'--cinnabar'},
+  {k:'dim',   zh:'点心',     it:'Ravioli e baozi',         g:'点', c:'--jade'},
+  {k:'cold',  zh:'凉菜小吃', it:'Antipasti e stuzzichini', g:'凉', c:'--jade'},
+  {k:'soup',  zh:'汤',       it:'Zuppe',                   g:'汤', c:'--gold'},
+  {k:'rice',  zh:'饭',       it:'Riso',                    g:'饭', c:'--gold'},
+  {k:'brodo', zh:'汤面',     it:'Pasta in brodo',          g:'面', c:'--gold'},
+  {k:'salt',  zh:'炒面',     it:'Pasta saltata',           g:'炒', c:'--gold'},
+  {k:'spec',  zh:'特色菜',   it:'Specialità',              g:'特', c:'--cinnabar'},
+  {k:'pollo', zh:'鸡',       it:'Pollo',                   g:'鸡', c:'--gold'},
+  {k:'gamb',  zh:'虾',       it:'Gamberi e calamari',      g:'虾', c:'--cinnabar'},
+  {k:'fritto',zh:'炸',       it:'Fritti',                  g:'炸', c:'--gold'},
+  {k:'verd',  zh:'蔬菜',     it:'Verdure',                 g:'菜', c:'--jade'},
+  {k:'dolci', zh:'甜品',     it:'Dolci',                   g:'甜', c:'--plum'},
+  {k:'bsp',   zh:'特饮',     it:'Bevande speciali',        g:'饮', c:'--plum'},
+  {k:'bev',   zh:'饮料',     it:'Bevande e caffetteria',   g:'饮', c:'--jade'},
+  {k:'birra', zh:'啤酒',     it:'Birre e cocktail',        g:'啤', c:'--gold'},
+  {k:'vino',  zh:'葡萄酒',   it:'Vini',                    g:'酒', c:'--plum'},
+];
+const AL = {G:'Glutine',C:'Crostacei',U:'Uova',P:'Pesce',A:'Arachidi',S:'Soia',L:'Latte',N:'Frutta a guscio',SE:'Sedano',SN:'Senape',SS:'Sesamo',LU:'Lupini',M:'Molluschi',SO:'Solfiti'};
+// [codice, cinese, italiano, prezzo|null, categoria, allergeni, flag(h=piccante v=veg s=firma), porzione, varianti]
+const RAW = [
+ ['100','功夫招牌炒饭','Riso Kung Fu',15,'sig','U,S,C','s','',null,'Il riso saltato della casa'],
+ ['200','功夫招牌面','Pasta Kung Fu',12,'sig','G,S,U','s','',null,'Gli spaghetti della casa'],
+ ['300','北京烤鸭','Anatra pechinese',null,'sig','G,S,SS','s','',[['Metà',32],['Intera',59]],'Servita con crêpe, cipollotto e salsa hoisin'],
+ ['101','饺子','Ravioli di carne al vapore',5,'dim','G,S','','8 pz'],
+ ['102','锅贴','Ravioli di carne brasati',5.5,'dim','G,S','','8 pz'],
+ ['103','虾饺','Ravioli di gamberi',5,'dim','G,C,S','','4 pz'],
+ ['104','菜饺','Ravioli di verdura',4,'dim','G,S','v','4 pz'],
+ ['105','牛肉饺','Ravioli di manzo',4,'dim','G,S','','4 pz'],
+ ['106','鸡肉蘑菇饺','Ravioli di pollo e funghi',4,'dim','G,S','','4 pz'],
+ ['107','海鲜饺','Ravioli di pesce',5,'dim','G,P,C,M,S','','4 pz'],
+ ['108','小笼包','Xiaolongbao',8,'dim','G,S','','6 pz'],
+ ['109','包子','Baozi al vapore',5,'dim','G,S','','3 pz'],
+ ['110','煎包','Baozi alla griglia',5.5,'dim','G,S,SS','','3 pz'],
+ ['111','白面包','Pane cinese al vapore',4,'dim','G','v','3 pz'],
+ ['112','兔包','Pane cinese ripieno di crema dolce',4,'dim','G,U,L','v','3 pz'],
+ ['113','春卷','Involtini primavera',null,'dim','G,S','',''],
+ ['114','烧麦','Shaomai',null,'dim','G,S','',''],
+ ['115','炸馄饨','Wonton fritti',7,'dim','G,S','','10 pz'],
+ ['116','毛豆','Edamame',4,'cold','S','v',''],
+ ['117','海草','Goma wakame (alga)',5,'cold','SS,S','v',''],
+ ['118','沙拉菜','Insalata mista con salsa',5,'cold','S,SN','v',''],
+ ['119','海鲜沙拉','Insalata di mare',13,'cold','P,C,M','',''],
+ ['120','拍黄瓜','Cetriolo in salsa di soia e piccante',5,'cold','S,SS','vh',''],
+ ['121','酸甜萝卜','Ravanello agrodolce',6,'cold','S','v',''],
+ ['122','皮蛋豆腐','Tofu e uova centenario',7,'cold','S,U','',''],
+ ['123','卤牛肉','Manzo brasato',9,'cold','S,G','',''],
+ ['124','炸虾排','Cotoletta di gamberi con mais',9,'cold','C,G,U','',''],
+ ['125','油渣','Maiale fritto',9,'cold','G,S','',''],
+ ['126','五香干','Tofu secco',8,'cold','S','v',''],
+ ['127','手撕鸡','Pollo piccante',10,'cold','S,SS','h',''],
+ ['128','鸡丝玉米汤','Zuppa pollo, mais e uova',null,'soup','U','',''],
+ ['129','酸辣汤','Zuppa agropiccante',null,'soup','S,U,G','h',''],
+ ['130','馄饨汤','Zuppa wonton',null,'soup','G,S','',''],
+ ['201','广东饭','Riso cantonese',6,'rice','U,S','',''],
+ ['202','虾仁炒饭','Riso saltato con gamberi e verdura',7,'rice','C,U,S','',''],
+ ['203','蔬菜炒饭','Riso saltato con verdure miste',6,'rice','S','v',''],
+ ['204','牛肉盖饭','Riso con manzo',10,'rice','S','',''],
+ ['205','馄饨面','Noodle con wonton',10,'brodo','G,S,U','',''],
+ ['206','红烧牛肉拉面','Ramen cinese in brodo con vitello e verdure',10,'brodo','G,S,SE','',''],
+ ['207','红烧牛肉方便面','Ramen giapponese in brodo con vitello e verdure',10,'brodo','G,S,SE','',''],
+ ['208','虾仁炒面','Spaghetti saltati con gamberi',8,'salt','G,C,U,S','',''],
+ ['209','虾仁炒乌冬','Udon saltati con gamberi e verdura',8,'salt','G,C,S','',''],
+ ['210','虾仁炒粉干','Spaghetti di riso saltati con gamberi e verdura',8,'salt','C,S','',''],
+ ['211','虾仁炒粉丝','Spaghetti di soia saltati con gamberi e verdura',8,'salt','C,S','',''],
+ ['212','虾仁炒拉面','Ramen cinese saltato con gamberi e verdura',9,'salt','G,C,S','',''],
+ ['213','炸酱面','Ramen cinese con ragù di vitello',10,'salt','G,S','',''],
+ ['214','酸辣粉','Suan la fen',9,'salt','S,A,SS','h',''],
+ ['215','麻婆豆腐','Mapo tofu',null,'spec','S','h',''],
+ ['216','鲜炒安格斯牛柳','Manzo Angus saltato con verdure',null,'spec','S','',''],
+ ['217','黑椒牛肋骨','Costata di manzo saltata al pepe nero',null,'spec','S','',''],
+ ['218','白玉菇炒牛肉','Manzo saltato con funghi bianchi',null,'spec','S','',''],
+ ['219','功夫酥肉','Maiale croccante fritto',18,'spec','G,U','s',''],
+ ['220','功夫豆腐煲','Zuppa di tofu',12,'spec','S','s',''],
+ ['221','话梅排骨','Costine di maiale alle prugne',10,'spec','S,SO','',''],
+ ['222','菠萝咕咾肉','Maiale in agrodolce con ananas',null,'spec','G,U,S','',''],
+ ['223','红烧肉','Maiale stufato Hongshao',null,'spec','S','',''],
+ ['224','鱼香肉丝','Lonza in salsa Yuxiang',null,'spec','S','h',''],
+ ['225','水煮牛肉','Manzo piccante bollito',null,'spec','S,SE','h',''],
+ ['226','葱油鲈鱼','Branzino all’olio di cipollotto',18,'spec','P,S','','',[['Al vapore',18],['Alla griglia',18]]],
+ ['227','水煮鱼','Pesce piccante bollito',28,'spec','P,S,SE','h','',null,'Da condividere'],
+ ['228','酸菜鱼','Pesce con verdure cinesi bollito',28,'spec','P,S','','',null,'Da condividere'],
+ ['229','杏仁鸡','Pollo alle mandorle',8,'pollo','N,S,G','',''],
+ ['230','土豆鸡','Pollo con patate',8,'pollo','S','',''],
+ ['231','蔬菜鸡','Pollo saltato con verdure miste',8,'pollo','S','',''],
+ ['232','糖醋鸡','Pollo fritto in salsa agrodolce',8,'pollo','G,U,S','',''],
+ ['233','辣子鸡','Pollo fritto in salsa piccante',9,'pollo','G,S,SS','h',''],
+ ['234','宫保鸡丁','Pollo imperiale (Kung Pao)',9,'pollo','A,S','h',''],
+ ['235','双冬鸡','Pollo saltato con funghi e bambù',8,'pollo','S','',''],
+ ['236','土豆虾','Gamberi con patate',9,'gamb','C,S','',''],
+ ['237','蔬菜虾','Gamberi saltati con verdure miste',9,'gamb','C,S','',''],
+ ['238','糖醋虾','Gamberi fritti in salsa agrodolce',10,'gamb','C,G,U,S','',''],
+ ['239','宫保虾仁','Gamberi Gong Bao',10,'gamb','C,A,S','h',''],
+ ['240','椒盐虾','Gamberi al pepe e sale',10,'gamb','C,G','',''],
+ ['241','干锅鱿鱼','Calamari alla pentola secca',15,'gamb','M,S,SE','h',''],
+ ['242','干锅大虾','Gamberi alla pentola secca',15,'gamb','C,S,SE','h','6 pz'],
+ ['243','炸鸡','Pollo fritto',7,'fritto','G,U','',''],
+ ['244','炸虾','Gamberi fritti',9,'fritto','C,G,U','',''],
+ ['245','炸海鲜','Frutti di mare fritti',15,'fritto','P,C,M,G','',''],
+ ['246','炸薯条','Patatine fritte',null,'fritto','','v',''],
+ ['247','炒豆芽','Germogli di soia saltati con verdure miste',7,'verd','S','v',''],
+ ['248','炒小白菜','Pak choi saltati',7,'verd','S','v',''],
+ ['249','空心菜','Spinaci cinesi saltati',8,'verd','S','v',''],
+ ['250','鱼香茄子','Melanzane cinesi in salsa agro-piccante',9,'verd','S','vh',''],
+ ['251','干锅花菜','Cavolfiore piccante saltato in wok',8,'verd','S','vh',''],
+ ['252','铁板芋','Taro alla piastra',null,'verd','S','v',''],
+ ['253','干煸四季豆','Fagiolini saltati piccanti',9,'verd','S','h',''],
+ ['254','蛋黄焗香芋','Taro al tuorlo d’uovo',15,'verd','U,L','v',''],
+ ['255','蛋黄焗玉米','Mais al tuorlo d’uovo',10,'verd','U,L','v',''],
+ ['256','酸辣土豆丝','Patate filanti agro-piccanti',7,'verd','S','vh',''],
+ ['257','椒盐花菜','Cavolfiore al sale e pepe',8,'verd','G','v',''],
+ ['D1','','Profiterol',6,'dolci','G,U,L','v','',[['Scuro',6],['Bianco',6]]],
+ ['D2','','Tartufo',6,'dolci','L,U,N','v','',[['Scuro',6],['Bianco',6]]],
+ ['D3','','Limone ripieno',6,'dolci','L','v',''],
+ ['D4','','Cocco ripieno',6,'dolci','L','v',''],
+ ['D5','','Soufflé al cioccolato',6,'dolci','G,U,L','v',''],
+ ['D6','','Crema catalana',6,'dolci','U,L','v',''],
+ ['D7','','Sorbetto al limone',3,'dolci','','v',''],
+ ['D8','红糖糍粑','Mochi fritto con zucchero',6,'dolci','','v',''],
+ ['D9','冰麻薯','Mochi gelato',7,'dolci','L','v','',[['Mango',7],['Tè verde',7],['Cioccolato',7],['Vaniglia',7],['Cocco',7],['Pistacchio',7]]],
+ ['D10','炸汤圆','Palline di riso fritte',8,'dolci','SS','v','6 pz'],
+ ['D11','南瓜饼','Torte di zucca fritte',8,'dolci','G','v','6 pz'],
+ ['B1','青提苏苏','Green grape sparkler',6,'bsp','','v',''],
+ ['B2','红西柚乳酸菌','Pompelmo rosa con Yakult',6,'bsp','L','v',''],
+ ['B3','暴打青提柠檬茶','Tè al limone e uva verde',6,'bsp','','v',''],
+ ['B4','杨枝甘露','Succo di mango con sago',5,'bsp','L','v',''],
+ ['B5','','Acqua naturale 75 cl',3,'bev','','v',''],
+ ['B6','','Acqua frizzante 75 cl',3,'bev','','v',''],
+ ['B7','','Coca-Cola',3,'bev','','v',''],
+ ['B8','','Coca-Cola Zero',3,'bev','','v',''],
+ ['B9','','Estathé',3,'bev','','v','',[['Limone',3],['Pesca',3]]],
+ ['B10','','Fanta',3,'bev','','v',''],
+ ['B11','','Sprite',3,'bev','','v',''],
+ ['B12','','Latte di cocco',3.5,'bev','','v',''],
+ ['B13','','Latte di soia',5.5,'bev','S','v',''],
+ ['B14','','Tè cinese freddo',3,'bev','','v',''],
+ ['B15','','Bevanda al tè nero',4,'bev','','v',''],
+ ['B16','','Tè cinese caldo',3,'bev','','v','',[['Verde',3],['Gelsomino',3]]],
+ ['B17','','Caffè',1.5,'bev','','v',''],
+ ['B18','','Soju',9,'bev','','v','',[['Pesca',9],['Fragola',9]]],
+ ['B19','','Amaro / Grappa / Limoncello',3,'bev','','v',''],
+ ['B20','','Sake',3.5,'bev','','v','',[['Piccolo',3.5],['Grande',7]]],
+ ['R1','','Birra alla spina',3.5,'birra','G','v','',[['Piccola',3.5],['Media',6],['1 litro',10]]],
+ ['R2','','Birra cinese 66 cl',4.5,'birra','G','v',''],
+ ['R3','','Birra Moretti 66 cl',3.5,'birra','G','v',''],
+ ['R4','','Birra Heineken 66 cl',4,'birra','G','v',''],
+ ['R5','','Spritz',6,'birra','SO','v','',[['Peach',6],['Lemon',6],['Orange',6],['Hugo',6]]],
+ ['V1','','Vino bianco della casa',3,'vino','SO','v','',[['Calice',3],['1/4 L',3.5],['1/2 L',6],['1 L',10]]],
+ ['V2','','Donnafugata Anthilia',18,'vino','SO','v','bottiglia'],
+ ['V3','','Prosecco Cervo d’Oro Treviso',15,'vino','SO','v','bottiglia'],
+ ['V4','','Chardonnay',15,'vino','SO','v','bottiglia'],
+ ['V5','','Vermentino',15,'vino','SO','v','bottiglia'],
+ ['V6','','Langhe Arneis',28,'vino','SO','v','bottiglia'],
+ ['V7','','Bellavista',45,'vino','SO','v','bottiglia'],
+ ['V8','','Nebbiolo d’Alba',15,'vino','SO','v','bottiglia'],
+ ['V9','','Cervo Nero',22,'vino','SO','v','bottiglia'],
+ ['V10','','Le Volte',28,'vino','SO','v','bottiglia'],
+ ['V11','','Perano',28,'vino','SO','v','bottiglia'],
+ ['V12','','Lucente',30,'vino','SO','v','bottiglia'],
+ ['V13','','Il Bruciato',30,'vino','SO','v','bottiglia'],
+ ['V14','','Brunello di Montalcino',38,'vino','SO','v','bottiglia'],
+ ['V15','','Cont’Ugo',50,'vino','SO','v','bottiglia'],
+];
+const MENU = RAW.map(r=>({c:r[0],z:r[1],n:r[2],p:r[3],k:r[4],a:r[5]?r[5].split(','):[],f:r[6]||'',u:r[7]||'',v:r[8]||null,d:r[9]||''}));
+const BY = Object.fromEntries(MENU.map(m=>[m.c,m]));
+const CAT = Object.fromEntries(CATS.map(c=>[c.k,c]));
+const COPERTO = 2;
+const LUNCH = {price:12.9,
+  primi:['201','203','208','210'], secondi:['229','231','232','237','230'], bev:['B5','B6','B7','B14']};
+
+/* ---------- Stato ---------- */
+const S = {
+  view:'cliente', lang:'it', cat:'all', q:'', excl:new Set(),
+  cart:new Map(), people:2, table:7, note:'',
+  soldOut:new Set(['217']), pick:{}, // variante scelta per piatto
+  tickets:[], alerts:[], myTicket:null, seq:41,
+  bookings:[
+    {t:'12:30',name:'Martina R.',p:4,note:'Seggiolone',src:'Online'},
+    {t:'13:00',name:'Luca B.',p:2,note:'',src:'Telefono'},
+    {t:'20:00',name:'Chen W.',p:6,note:'Anatra intera da preordinare',src:'Online'},
+    {t:'20:30',name:'Giulia F.',p:3,note:'Allergia arachidi',src:'Online'},
+  ],
+  replied:new Set(),
+};
+const now = Date.now();
+S.tickets = [
+  {id:38,src:'Tavolo 3',qr:true,status:'prep',t:now-9*60e3,items:[{q:2,c:'108'},{q:1,c:'102'},{q:1,c:'234'},{q:2,c:'201'}],note:''},
+  {id:39,src:'Asporto · Marco',qr:false,status:'new',t:now-3*60e3,items:[{q:1,c:'300',v:'Metà'},{q:1,c:'249'}],note:'Ritiro 20:15'},
+  {id:40,src:'Tavolo 5',qr:true,status:'new',t:now-1*60e3,items:[{q:1,c:'100'},{q:1,c:'227'},{q:3,c:'B4'}],note:'Poco piccante'},
+  {id:37,src:'Tavolo 1',qr:true,status:'ready',t:now-16*60e3,items:[{q:2,c:'101'},{q:1,c:'213'}],note:''},
+];
+
+/* ---------- Utility ---------- */
+const $ = s=>document.querySelector(s);
+const eur = n=>'€ '+n.toFixed(2).replace('.',',');
+const esc = s=>String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const priceOf = (m,v)=>{ if(m.v){const x=m.v.find(o=>o[0]===v)||m.v[0];return x[1];} return m.p; };
+const nameP = m=> S.lang==='zh' && m.z ? m.z : m.n;
+const nameS = m=> S.lang==='zh' && m.z ? m.n : (m.z||'');
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600);}
+function minsAgo(t){return Math.max(0,Math.floor((Date.now()-t)/60e3));}
+
+/* ---------- Router ---------- */
+const VIEWS=['cliente','cucina','titolare','proposta'];
+function route(){const h=location.hash.replace('#','');S.view=VIEWS.includes(h)?h:'cliente';render();window.scrollTo(0,0);}
+window.addEventListener('hashchange',route);
+
+function render(){
+  document.querySelectorAll('.tabbar a').forEach(a=>{ if(a.dataset.v===S.view) a.setAttribute('aria-current','page'); else a.removeAttribute('aria-current'); });
+  $('#langBtn').hidden = S.view!=='cliente';
+  ({cliente:renderClient,cucina:renderKDS,titolare:renderOwner,proposta:renderProposal})[S.view]();
+  updateCartBar(); updateBadge();
+}
+function updateBadge(){const n=S.tickets.filter(t=>t.status==='new').length+S.alerts.length;const b=$('#kdsBadge');b.textContent=n;b.hidden=!n;}
+
+/* ---------- Vista cliente ---------- */
+function renderClient(){
+  const v=$('#view');
+  v.innerHTML=`<div class="col stack">
+    <section class="resto">
+      <div class="seal" aria-hidden="true">功夫</div>
+      <div>
+        <h1>Kung Fu Sapori <span class="han" style="font-size:.9em;color:var(--cinnabar)">功夫美食</span></h1>
+        <div class="meta"><span><span class="stars">★★★★★</span> 5,0 · 67 recensioni Google</span><span>Corso Raffaello 0/C, Torino</span></div>
+      </div>
+    </section>
+    <div class="row" style="justify-content:space-between;flex-wrap:wrap">
+      <span class="table-pill">Stai ordinando al <b>Tavolo ${S.table}</b></span>
+      <span class="note">QR scansionato · nessuna app da installare</span>
+    </div>
+    <div id="myStatus"></div>
+    <div class="quick">
+      <button type="button" data-act="waiter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>Chiama cameriere</button>
+      <button type="button" data-act="bill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2zM9 7h6M9 11h6M9 15h4"/></svg>Chiedi il conto</button>
+      <button type="button" data-act="book"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Prenota tavolo</button>
+    </div>
+
+    <section class="stack" aria-labelledby="sigH">
+      <div class="row" style="justify-content:space-between"><h2 id="sigH">I piatti della casa</h2><span class="han muted">功夫招牌</span></div>
+      <div class="sig-scroll">
+        ${sigCard('300','','烤','Anatra pechinese','Il piatto che i clienti citano di più nelle recensioni.','Metà € 32 · Intera € 59')}
+        ${sigCard('100','jade','饭','Riso Kung Fu','Il riso saltato firmato dalla cucina.',eur(15))}
+        ${sigCard('200','gold','面','Pasta Kung Fu','Gli spaghetti della casa.',eur(12))}
+      </div>
+    </section>
+
+    <section class="lunch">
+      <div class="stack" style="gap:4px">
+        <span class="eyebrow">A pranzo · 午餐</span>
+        <h3>Menu pranzo componibile</h3>
+        <p class="note">Il cliente vede solo i piatti davvero inclusi e sceglie in 3 tocchi.</p>
+      </div>
+      <div class="stack" style="align-items:flex-end;gap:6px"><span class="p num">${eur(LUNCH.price)}</span><button class="btn" type="button" data-act="lunch">Componi</button></div>
+    </section>
+
+    <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Cerca: xiaolongbao, gamberi, 鸭…" value="${esc(S.q)}" aria-label="Cerca nel menu"></div>
+    <div class="chips" id="catChips" role="toolbar" aria-label="Categorie">
+      <button class="chip" type="button" data-cat="all" aria-pressed="${S.cat==='all'}">Tutto</button>
+      ${CATS.map(c=>`<button class="chip" type="button" data-cat="${c.k}" aria-pressed="${S.cat===c.k}">${S.lang==='zh'?c.zh:c.it}</button>`).join('')}
+    </div>
+    <details class="allerg" ${S.excl.size?'open':''}>
+      <summary><span>Allergie o intolleranze?${S.excl.size?` <span class="pill warn">${S.excl.size} esclusi</span>`:''}</span><span class="muted" aria-hidden="true">▾</span></summary>
+      <div class="chips">${Object.entries(AL).map(([k,l])=>`<button type="button" class="chip al" data-al="${k}" aria-pressed="${S.excl.has(k)}">${l}</button>`).join('')}</div>
+      <p class="note" style="margin-top:8px">Tocca un allergene per nascondere i piatti che lo contengono. Come da menu: tutti i piatti possono contenere tracce di sesamo e soia e contengono glutammato. Allergeni per piatto inseriti a titolo indicativo per la demo, da confermare con la cucina.</p>
+    </details>
+    <div id="dishList" class="stack"></div>
+    <p class="note" style="text-align:center">Coperto € 2,00 a persona. Alcuni ingredienti possono essere surgelati all'origine.</p>
+  </div>`;
+  renderStatus(); renderDishes();
+  $('#q').addEventListener('input',e=>{S.q=e.target.value;renderDishes();});
+}
+function sigCard(code,cls,g,t,p,price){
+  const out=S.soldOut.has(code);
+  return `<article class="sig ${cls}"><span class="big" aria-hidden="true">${g}</span>
+    <span class="eyebrow" style="color:inherit;opacity:.8">N. ${code}</span><h3>${t}</h3><p>${p}</p>
+    <div class="foot"><span class="price num">${price}</span><button type="button" data-add="${code}" ${out?'disabled':''}>${out?'Esaurito':'Aggiungi'}</button></div></article>`;
+}
+function visible(m){
+  if(S.cat!=='all' && m.k!==S.cat) return false;
+  if(S.excl.size && m.a.some(a=>S.excl.has(a))) return false;
+  if(S.q){const q=S.q.trim().toLowerCase(); if(q && !(m.n.toLowerCase().includes(q)||m.z.includes(q)||m.c.toLowerCase()===q)) return false;}
+  return true;
+}
+function renderDishes(){
+  const box=$('#dishList'); if(!box) return;
+  const groups=CATS.map(c=>({c,items:MENU.filter(m=>m.k===c.k&&visible(m))})).filter(g=>g.items.length);
+  if(!groups.length){box.innerHTML=`<div class="empty">Nessun piatto corrisponde ai filtri. Prova a togliere un allergene o a cambiare ricerca.</div>`;return;}
+  box.innerHTML=groups.map(({c,items})=>`
+    <div class="cat-head" id="cat-${c.k}"><h2>${S.lang==='zh'?c.zh:c.it}</h2><span class="han">${S.lang==='zh'?c.it:c.zh}</span></div>
+    ${items.map(dishHTML).join('')}`).join('');
+}
+function dishHTML(m){
+  const c=CAT[m.k]; const out=S.soldOut.has(m.c); const sel=S.pick[m.c]||(m.v?m.v[0][0]:'');
+  const p=m.v?priceOf(m,sel):m.p; const noPrice=p==null;
+  const inCart=[...S.cart.values()].filter(x=>x.c===m.c).reduce((a,x)=>a+x.q,0);
+  const tags=[]; if(m.f.includes('s'))tags.push('<span class="tag" style="color:var(--cinnabar)">Della casa</span>');
+  if(m.f.includes('h'))tags.push('<span class="tag hot">Piccante</span>'); if(m.f.includes('v')&&!['bev','birra','vino','bsp','dolci'].includes(m.k))tags.push('<span class="tag veg">Vegetariano</span>');
+  if(m.u)tags.push(`<span class="tag">${m.u}</span>`); if(out)tags.push('<span class="tag out">Esaurito oggi</span>');
+  m.a.forEach(a=>tags.push(`<span class="tag" title="Allergene">${AL[a]}</span>`));
+  return `<article class="dish ${out?'off':''}">
+    <div class="tile" style="--c:var(${c.c})" aria-hidden="true"><span class="g">${c.g}</span><span class="code">${m.c.match(/^\d/)?m.c:''}</span></div>
+    <div class="names"><div class="n1 ${S.lang==='zh'&&m.z?'han':''}">${nameP(m)}</div>${nameS(m)?`<div class="n2 ${S.lang!=='zh'?'han':''}">${nameS(m)}</div>`:''}
+      ${m.d?`<div class="n2">${m.d}</div>`:''}
+      ${m.v?`<div class="variants">${m.v.map(o=>`<button type="button" data-var="${m.c}|${o[0]}" aria-pressed="${o[0]===sel}">${o[0]}${m.v.some(x=>x[1]!==o[1])?' '+eur(o[1]).replace('€ ',''):''}</button>`).join('')}</div>`:''}
+      <div class="tags">${tags.join('')}</div></div>
+    <div class="right"><span class="price">${noPrice?'<span class="muted" style="font-weight:500;font-size:.8rem">in sala</span>':eur(p)}</span>
+      <button class="add" type="button" data-add="${m.c}" aria-label="Aggiungi ${esc(m.n)}" ${out||noPrice?'disabled':''}>+</button>
+      ${inCart?`<span class="qty-badge">×${inCart}</span>`:''}</div>
+  </article>`;
+}
+function renderStatus(){
+  const box=$('#myStatus'); if(!box) return;
+  const t=S.tickets.find(x=>x.id===S.myTicket);
+  if(!t){box.innerHTML='';return;}
+  const lab={new:'Ricevuto dalla cucina',prep:'In preparazione',ready:'Pronto, sta arrivando al tavolo',done:'Servito. Buon appetito!'}[t.status];
+  box.innerHTML=`<div class="status-strip"><span class="dot ${t.status==='done'?'ready':t.status}"></span><div><b>Ordine #${t.id}</b> · ${lab}<div class="note">Aggiornato in tempo reale dallo schermo della cucina</div></div></div>`;
+}
+
+/* ---------- Carrello ---------- */
+function addToCart(code,variant,extra){
+  const m=BY[code]; if(!m) return;
+  const v=variant||(m.v?(S.pick[code]||m.v[0][0]):'');
+  const key=code+'|'+v+(extra?'|'+extra.desc:'');
+  const cur=S.cart.get(key)||{c:code,v,q:0,price:extra?extra.price:priceOf(m,v),label:extra?extra.label:m.n,desc:extra?extra.desc:'',zh:m.z};
+  cur.q++; S.cart.set(key,cur);
+  toast(`Aggiunto: ${cur.label}${v?' · '+v:''}`);
+  updateCartBar(); if(S.view==='cliente') renderDishes();
+}
+function cartTotals(){const sub=[...S.cart.values()].reduce((a,x)=>a+x.q*x.price,0);const cop=S.cart.size?S.people*COPERTO:0;return{sub,cop,tot:sub+cop,n:[...S.cart.values()].reduce((a,x)=>a+x.q,0)};}
+function updateCartBar(){const {tot,n}=cartTotals();const bar=$('#cartbar');bar.hidden=!(n&&S.view==='cliente');$('#cartCnt').textContent=n;$('#cartTot').textContent=eur(tot);}
+function openSheet(html){$('#sheetRoot').innerHTML=`<div class="scrim" id="scrim"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
+  $('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeSheet();});}
+function closeSheet(){$('#sheetRoot').innerHTML='';}
+function cartSheet(){
+  const {sub,cop,tot,n}=cartTotals();
+  if(!n){closeSheet();return;}
+  openSheet(`<div class="sheet-head"><div><span class="eyebrow">Tavolo ${S.table}</span><h2>Il tuo ordine</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
+    ${[...S.cart.entries()].map(([k,x])=>`<div class="line-item"><div><div style="font-weight:600">${esc(x.label)}${x.v?' · '+x.v:''}</div><div class="sub">${x.desc?esc(x.desc):(x.zh?`<span class="han">${x.zh}</span> · `:'')+eur(x.price)}</div></div>
+      <div class="stepper"><button type="button" data-dec="${esc(k)}" aria-label="Togli uno">−</button><b class="num">${x.q}</b><button type="button" data-inc="${esc(k)}" aria-label="Aggiungi uno">+</button></div>
+      <b class="num">${eur(x.q*x.price)}</b></div>`).join('')}
+    <div class="grid2"><label class="field">Persone al tavolo<select id="ppl">${[1,2,3,4,5,6,7,8].map(i=>`<option ${i===S.people?'selected':''}>${i}</option>`).join('')}</select></label>
+    <label class="field">Note per la cucina<input id="cnote" placeholder="Es. poco piccante" value="${esc(S.note)}"></label></div>
+    <div class="totals"><span>Piatti e bevande</span><span class="num">${eur(sub)}</span><span>Coperto (${S.people} × € 2,00)</span><span class="num">${eur(cop)}</span><span class="grand">Totale</span><span class="grand num">${eur(tot)}</span></div>
+    <button class="btn" type="button" data-act="send" style="padding:14px">Invia l'ordine in cucina</button>
+    <p class="note" style="text-align:center">Demo: nessun pagamento reale. In produzione si può pagare dal telefono o in cassa.</p>`);
+  $('#ppl').addEventListener('change',e=>{S.people=+e.target.value;cartSheet();});
+  $('#cnote').addEventListener('input',e=>S.note=e.target.value);
+}
+function sendOrder(){
+  const id=++S.seq;
+  const items=[...S.cart.values()].map(x=>({q:x.q,c:x.c,v:x.v,desc:x.desc,label:x.label}));
+  S.tickets.unshift({id,src:'Tavolo '+S.table,qr:true,status:'new',t:Date.now(),items,note:S.note});
+  S.myTicket=id; S.cart.clear(); S.note=''; closeSheet(); render();
+  toast(`Ordine #${id} inviato. Apri la scheda Cucina per vederlo arrivare.`);
+}
+function lunchSheet(){
+  const grp=(key,title,list)=>`<div class="opt-group"><span class="eyebrow">${title}</span>${list.map((c,i)=>`<label class="opt"><input type="radio" name="${key}" value="${c}" ${i===0?'checked':''}>${BY[c].n}<span class="han">${BY[c].z}</span></label>`).join('')}</div>`;
+  openSheet(`<div class="sheet-head"><div><span class="eyebrow">Menu pranzo · ${eur(LUNCH.price)}</span><h2>Componi il tuo pranzo</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
+    ${grp('primo','1 · Primo',LUNCH.primi)}${grp('secondo','2 · Secondo',LUNCH.secondi)}${grp('bev','3 · Bevanda',LUNCH.bev)}
+    <p class="note">Composizione di esempio. Il ristorante decide piatti, giorni e orari dal pannello e può cambiarli ogni settimana.</p>
+    <button class="btn" type="button" data-act="lunchAdd" style="padding:14px">Aggiungi menu pranzo · ${eur(LUNCH.price)}</button>`);
+}
+function bookSheet(){
+  openSheet(`<div class="sheet-head"><div><span class="eyebrow">Kung Fu Sapori</span><h2>Prenota un tavolo</h2></div><button class="close" type="button" data-act="close" aria-label="Chiudi">×</button></div>
+    <form id="bookForm" class="stack">
+      <div class="grid2"><label class="field">Orario<select id="bt">${['12:00','12:30','13:00','13:30','19:30','20:00','20:30','21:00','21:30'].map(t=>`<option ${t==='20:00'?'selected':''}>${t}</option>`).join('')}</select></label>
+      <label class="field">Persone<select id="bp">${[1,2,3,4,5,6,7,8,10,12].map(i=>`<option ${i===2?'selected':''}>${i}</option>`).join('')}</select></label></div>
+      <label class="field">Nome<input id="bn" required placeholder="Il tuo nome" value="Cliente demo"></label>
+      <label class="field">Richieste<input id="bnote" placeholder="Es. anatra intera, seggiolone, allergie"></label>
+      <button class="btn" type="submit" style="padding:14px">Conferma prenotazione</button>
+      <p class="note">La prenotazione arriva subito nel pannello del titolare. In produzione parte anche la conferma via WhatsApp o SMS.</p>
+    </form>`);
+  $('#bookForm').addEventListener('submit',e=>{e.preventDefault();
+    S.bookings.push({t:$('#bt').value,name:$('#bn').value||'Cliente',p:+$('#bp').value,note:$('#bnote').value,src:'Online · nuova'});
+    S.bookings.sort((a,b)=>a.t.localeCompare(b.t)); closeSheet(); toast('Prenotazione inviata. La trovi nella scheda Titolare.');});
+}
+
+/* ---------- Vista cucina (KDS) ---------- */
+function renderKDS(){
+  const lanes=[['new','Nuovi'],['prep','In preparazione'],['ready','Pronti da servire']];
+  $('#view').innerHTML=`<div class="kds-head"><div><span class="eyebrow">Schermo cucina · tablet</span><h2>Comande in tempo reale</h2></div>
+    <span class="note">Tocca i pulsanti per far avanzare le comande. Il cliente vede lo stato sul suo telefono.</span></div>
+    ${S.alerts.length?`<div class="alerts" style="margin-bottom:12px">${S.alerts.map((a,i)=>`<div class="alert">${esc(a.txt)} · ${minsAgo(a.t)} min<button type="button" data-ack="${i}">Fatto</button></div>`).join('')}</div>`:''}
+    <div class="kds">${lanes.map(([st,lab])=>{const ts=S.tickets.filter(t=>t.status===st);return `<section class="lane"><div class="lane-h"><span>${lab}</span><span class="n">${ts.length}</span></div>
+      ${ts.length?ts.map(ticketHTML).join(''):`<div class="empty">Nessuna comanda</div>`}</section>`;}).join('')}</div>`;
+}
+function ticketHTML(t){
+  const m=minsAgo(t.t); const late=t.status!=='ready'&&m>=12;
+  const next={new:['Inizia','prep'],prep:['Pronto','ready'],ready:['Servito','done']}[t.status];
+  return `<article class="ticket ${t.status} ${late?'late':''}">
+    <div class="th"><span>#${t.id} · ${esc(t.src)}${t.qr?'<span class="src-qr">QR</span>':''}</span><span class="timer">${m} min</span></div>
+    <ul>${t.items.map(i=>{const mm=BY[i.c];return `<li><b>${i.q}×</b><span>${esc(i.label||mm.n)}${i.v?' · '+i.v:''}${i.desc?`<br><span class="note">${esc(i.desc)}</span>`:''} ${mm.z?`<span class="zh">${mm.z}</span>`:''}</span></li>`;}).join('')}</ul>
+    ${t.note?`<div class="tn">Nota: ${esc(t.note)}</div>`:''}
+    <div class="tf"><button class="btn ${t.status==='ready'?'ghost':''}" type="button" data-adv="${t.id}|${next[1]}">${next[0]}</button></div></article>`;
+}
+
+/* ---------- Vista titolare ---------- */
+const REVIEWS=[
+  {who:'Serene D.',r:4,when:'1 settimana fa',lang:'en',txt:'Menu pranzo conveniente, ma la foto del maiale in agrodolce non era tra le scelte del menu da 12,90 €. Anatra pechinese ben preparata, riso cantonese non troppo unto. Posto promettente.',done:true,reply:'Grazie per essere tornata! Ci scusiamo per l’incomprensione sulla foto del menu pranzo…'},
+  {who:'dinn n.',r:5,when:'3 giorni fa',lang:'en',txt:'Ci siamo andati due volte, il cibo ci è piaciuto molto e il personale era cordiale.',done:true,reply:'Grazie mille per le 5 stelle e per essere tornato a trovarci!…'},
+  {who:'Ye A.',r:5,when:'2 giorni fa',lang:'zh',txt:'新开的中餐馆味道不错，值得推荐',done:true,reply:'谢谢你的认可👍'},
+  {who:'Perhindole',r:5,when:'1 settimana fa',lang:'it',txt:'Domenica a pranzo, camerieri molto disponibili. Ottima la carne brasata, da provare assolutamente l’anatra alla pechinese.',done:true,reply:'Grazie di cuore per le 5 stelle e per la splendida recensione!…'},
+  {who:'Nuova recensione (esempio)',r:5,when:'adesso',lang:'it',txt:'Xiaolongbao spettacolari e servizio velocissimo. Abbiamo ordinato dal QR al tavolo, comodissimo!',done:false,
+   draft:'Grazie di cuore per le 5 stelle! Siamo felici che gli xiaolongbao vi siano piaciuti e che ordinare dal tavolo sia stato comodo. La prossima volta provate l’anatra pechinese: vi aspettiamo in Corso Raffaello!'},
+];
+function renderOwner(){
+  const live=S.tickets.filter(t=>t.status!=='done').length;
+  const hours=[['12',14],['13',22],['14',9],['15',3],['19',6],['20',19],['21',24],['22',11]];
+  const max=26,W=320,H=120,bw=(W-22)/hours.length;
+  const chart=`<svg viewBox="0 0 ${W} ${H+22}" role="img" aria-label="Ordini per fascia oraria, dati di esempio">
+    ${[0,10,20].map(v=>{const y=H-v/max*H;return `<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/><text x="${W}" y="${y-3}" text-anchor="end" font-size="9" fill="var(--muted)">${v}</text>`;}).join('')}
+    ${hours.map(([h,n],i)=>{const bh=n/max*H,x=i*bw+bw*.2;return `<rect x="${x}" y="${H-bh}" width="${bw*.6}" height="${bh}" rx="3" fill="${n>=20?'var(--jade)':'color-mix(in oklab,var(--jade) 45%,var(--surface))'}"/><text x="${x+bw*.3}" y="${H+14}" text-anchor="middle" font-size="10" fill="var(--muted)">${h}</text>`;}).join('')}
+  </svg>`;
+  const top=[['Anatra pechinese','300',31],['Xiaolongbao','108',27],['Ravioli di carne brasati','102',22],['Riso Kung Fu','100',18],['Pollo imperiale','234',15]];
+  $('#view').innerHTML=`<div class="stack">
+    <div class="kds-head"><div><span class="eyebrow">Pannello titolare</span><h2>Oggi da Kung Fu Sapori</h2></div><span class="demo-flag">Numeri di esempio</span></div>
+    <div class="kpis">
+      <div class="kpi"><div class="l">Incasso di oggi</div><div class="v">€ 1.284</div><div class="d">+12% vs sabato scorso</div></div>
+      <div class="kpi"><div class="l">Coperti</div><div class="v num">63</div><div class="d">pranzo 24 · cena 39</div></div>
+      <div class="kpi"><div class="l">Scontrino medio</div><div class="v num">€ 20,40</div><div class="d">+€ 2,10 con QR</div></div>
+      <div class="kpi"><div class="l">Comande aperte</div><div class="v num">${live}</div><div class="d" style="color:var(--muted)">dal vivo</div></div>
+    </div>
+    <div class="owner-grid">
+      <div class="stack">
+        <section class="panel"><div class="panel-h"><h3>Ordini per ora</h3><span class="note">picco 21:00</span></div><div class="chart">${chart}</div></section>
+        <section class="panel"><div class="panel-h"><h3>Recensioni Google</h3><span class="pill ok">5,0 ★ · 67</span></div>
+          <p class="note">Rispondete già a tutte le recensioni. FlowIt prepara una bozza nella lingua del cliente: voi la controllate e la pubblicate.</p>
+          ${REVIEWS.map((r,i)=>`<div class="review"><div class="who"><span>${esc(r.who)}</span><span class="stars">${'★'.repeat(r.r)}<span class="muted">${'★'.repeat(5-r.r)}</span></span></div>
+            <div class="txt ${r.lang==='zh'?'han':''}">${esc(r.txt)}</div><div class="note">${r.when}</div>
+            ${r.done||S.replied.has(i)?`<div class="reply">${esc(r.reply||r.draft)}</div><span class="pill ok" style="align-self:flex-start">Risposto</span>`:
+            `<label class="eyebrow" for="draft${i}">Bozza di risposta</label><textarea id="draft${i}">${esc(r.draft)}</textarea><button class="btn" type="button" data-reply="${i}" style="align-self:flex-start">Pubblica risposta</button>`}</div>`).join('')}
+        </section>
+      </div>
+      <div class="stack">
+        <section class="panel"><div class="panel-h"><h3>Prenotazioni di oggi</h3><span class="note">${S.bookings.reduce((a,b)=>a+b.p,0)} persone</span></div>
+          <div>${S.bookings.map(b=>`<div class="book"><span class="t">${b.t}</span><div><b>${esc(b.name)}</b> · ${b.p} pers.${b.note?`<div class="note">${esc(b.note)}</div>`:''}</div><span class="pill ${b.src.includes('nuova')?'warn':'ok'}">${esc(b.src)}</span></div>`).join('')}</div>
+        </section>
+        <section class="panel"><div class="panel-h"><h3>Piatti più ordinati</h3><span class="note">ultimi 7 giorni</span></div>
+          <ul class="top-list">${top.map(([n,c,q])=>`<li><span>${n} <span class="han muted">${BY[c].z}</span></span><b class="num">${q}</b><span class="bar"><i style="width:${q/31*100}%"></i></span></li>`).join('')}</ul>
+        </section>
+        <section class="panel"><div class="panel-h"><h3>Disponibilità piatti</h3><span class="note">si aggiorna subito sul menu</span></div>
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="aq" type="search" placeholder="Cerca un piatto" aria-label="Cerca un piatto"></div>
+          <div class="avail" id="avail"></div>
+        </section>
+      </div>
+    </div></div>`;
+  const drawAvail=q=>{$('#avail').innerHTML=MENU.filter(m=>!['bev','birra','vino'].includes(m.k)).filter(m=>!q||m.n.toLowerCase().includes(q)||m.z.includes(q)||m.c===q)
+    .map(m=>`<label><span class="mono muted" style="font-size:.75rem">${m.c}</span><span>${m.n}${S.soldOut.has(m.c)?' <span class="pill warn">esaurito</span>':''}</span><input class="switch" type="checkbox" data-avail="${m.c}" ${S.soldOut.has(m.c)?'':'checked'} aria-label="${esc(m.n)} disponibile"></label>`).join('');};
+  drawAvail(''); $('#aq').addEventListener('input',e=>drawAvail(e.target.value.trim().toLowerCase()));
+}
+
+/* ---------- Vista proposta ---------- */
+function renderProposal(){
+  const rows=[
+    ['Locale aperto da poco in Corso Raffaello, già 5,0 ★ su 67 recensioni Google.','Una vetrina che trasforma le recensioni in prenotazioni: pagina del ristorante, menu e prenotazione online collegati alla scheda Google.','book'],
+    ['Nessun sito web collegato alla scheda Google.','Pagina web e menu digitale pronti in pochi giorni, con il vostro dominio o un link FlowIt.','cliente'],
+    ['Menu cartaceo di 16 pagine, oltre 130 voci, allergeni su una pagina separata.','Menu QR con ricerca, foto, filtro allergeni per piatto e disponibilità aggiornata in un clic.','cliente'],
+    ['Una cliente ha trovato confuso il menu pranzo da 12,90 € (foto di un piatto non incluso).','Menu pranzo componibile: il cliente vede solo i piatti inclusi e sceglie in 3 tocchi.','lunch'],
+    ['Clienti italiani, cinesi e stranieri (recensioni in italiano, inglese e cinese).','Menu bilingue italiano · 中文, comande in cucina con il nome cinese del piatto.','cliente'],
+    ['Rispondete a mano a ogni recensione.','Bozze di risposta pronte nella lingua del cliente, da approvare con un tocco.','titolare'],
+    ['Piatti di punta da preordinare (anatra pechinese intera, pesce da 28 €).','Preordine in fase di prenotazione e comanda che arriva in cucina già con l’orario.','cucina'],
+  ];
+  $('#view').innerHTML=`<div class="col stack" style="gap:16px">
+    <section class="prop-hero"><span class="eyebrow">Proposta FlowIt Pro</span>
+      <h1>Il vostro menu, gli ordini e le recensioni in <em>un solo flusso</em></h1>
+      <p class="muted">Demo costruita sul vostro menu reale e su quello che i clienti scrivono di voi online. Provate ogni schermata dalle schede in basso.</p></section>
+    <section class="stack"><h2>Cosa abbiamo visto, cosa cambia</h2>
+      <div class="fit">${rows.map(r=>`<div class="fit-row"><div class="seen"><span class="k">Oggi</span><p>${r[0]}</p></div><div class="does"><span class="k">Con FlowIt Pro</span><p>${r[1]}</p><button type="button" data-go="${r[2]}">Vedi nella demo</button></div></div>`).join('')}</div></section>
+    <section class="panel"><h3>Cosa include FlowIt Pro</h3>
+      <ul class="top-list" style="gap:6px">${['Menu digitale QR bilingue con allergeni','Ordini dal tavolo, chiamata cameriere e richiesta conto','Schermo cucina con tempi e stato delle comande','Menu pranzo e piatti del giorno gestiti dal titolare','Prenotazioni online con preordine','Bozze di risposta alle recensioni Google','Statistiche su incassi, orari e piatti più venduti'].map(x=>`<li style="grid-template-columns:20px 1fr"><span style="color:var(--jade);font-weight:700">✓</span><span>${x}</span></li>`).join('')}</ul></section>
+    <section class="stack"><h2>Come partiamo</h2>
+      <ol class="steps"><li>Il menu completo è già caricato: lo rivediamo insieme e confermiamo prezzi e allergeni.</li><li>Fotografiamo i piatti principali e stampiamo i QR per i tavoli.</li><li>Formazione di sala e cucina: mezz'ora con il tablet della cucina.</li><li>Si va online, con assistenza nelle prime settimane.</li></ol></section>
+    <section class="panel"><h3>Piano e prezzo</h3><p class="muted">Da definire insieme in base al numero di tavoli e ai moduli scelti.</p></section>
+    <div class="sources"><span class="eyebrow">Fonti della demo</span><span>Menu “Kung Fu Sapori” fornito in PDF (16 pagine).</span><span>Scheda Google Maps “Kung Fu Ristorante”, Corso Raffaello 0/C, Torino: valutazione e recensioni pubbliche consultate il 14/11/2026.</span><span>Numeri del pannello titolare, comande e prenotazioni sono simulati.</span></div>
+  </div>`;
+}
+
+/* ---------- Eventi ---------- */
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button,[data-cat]'); if(!b) return;
+  const d=b.dataset;
+  if(d.cat){S.cat=d.cat;renderClient();const el=document.getElementById('cat-'+d.cat);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});return;}
+  if(d.al){S.excl.has(d.al)?S.excl.delete(d.al):S.excl.add(d.al);b.setAttribute('aria-pressed',S.excl.has(d.al));renderDishes();const s=document.querySelector('details.allerg summary span');if(s)s.innerHTML=`Allergie o intolleranze?${S.excl.size?` <span class="pill warn">${S.excl.size} esclusi</span>`:''}`;return;}
+  if(d.var){const [c,v]=d.var.split('|');S.pick[c]=v;renderDishes();return;}
+  if(d.add){addToCart(d.add);return;}
+  if(d.inc||d.dec){const k=d.inc||d.dec;const x=S.cart.get(k);if(!x)return;x.q+=d.inc?1:-1;if(x.q<=0)S.cart.delete(k);updateCartBar();cartSheet();return;}
+  if(d.adv){const [id,st]=d.adv.split('|');const t=S.tickets.find(x=>x.id==id);if(t){t.status=st;if(st==='done'&&t.id!==S.myTicket)S.tickets=S.tickets.filter(x=>x!==t);}
+    toast(st==='prep'?`#${id} in preparazione`:st==='ready'?`#${id} pronto: il cliente lo vede sul telefono`:`#${id} servito`);renderKDS();updateBadge();return;}
+  if(d.ack){S.alerts.splice(+d.ack,1);renderKDS();updateBadge();return;}
+  if(d.reply){const i=+d.reply;REVIEWS[i].draft=$('#draft'+i).value;S.replied.add(i);renderOwner();toast('Risposta pronta. In produzione viene pubblicata su Google.');return;}
+  if(d.go){if(d.go==='lunch'){location.hash='cliente';setTimeout(lunchSheet,50);}else if(d.go==='book'){location.hash='cliente';setTimeout(bookSheet,50);}else location.hash=d.go;return;}
+  switch(d.act){
+    case 'close':closeSheet();break;
+    case 'send':sendOrder();break;
+    case 'lunch':lunchSheet();break;
+    case 'book':bookSheet();break;
+    case 'waiter':S.alerts.push({txt:`Tavolo ${S.table} chiama il cameriere`,t:Date.now()});updateBadge();toast('Il cameriere è stato avvisato.');break;
+    case 'bill':S.alerts.push({txt:`Tavolo ${S.table} chiede il conto`,t:Date.now()});updateBadge();toast('Richiesta del conto inviata alla sala.');break;
+    case 'lunchAdd':{const g=n=>document.querySelector(`input[name="${n}"]:checked`).value;const p=g('primo'),s=g('secondo'),bv=g('bev');
+      addToCart(p,'',{price:LUNCH.price,label:'Menu pranzo',desc:`${BY[p].n} + ${BY[s].n} + ${BY[bv].n}`});closeSheet();break;}
+  }
+});
+document.addEventListener('change',e=>{const c=e.target.closest('[data-avail]');if(!c)return;const k=c.dataset.avail;c.checked?S.soldOut.delete(k):S.soldOut.add(k);
+  const lab=c.closest('label').children[1];lab.innerHTML=BY[k].n+(S.soldOut.has(k)?' <span class="pill warn">esaurito</span>':'');
+  toast(c.checked?`${BY[k].n}: di nuovo disponibile sul menu`:`${BY[k].n}: segnato come esaurito sul menu`);});
+$('#openCart').addEventListener('click',cartSheet);
+$('#langBtn').addEventListener('click',()=>{S.lang=S.lang==='it'?'zh':'it';$('#langBtn').textContent=S.lang==='it'?'IT · 中文':'中文 · IT';renderClient();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSheet();});
+setInterval(()=>{if(S.view==='cucina'&&!$('#sheetRoot').innerHTML)renderKDS(); if(S.view==='cliente')renderStatus();},30e3);
+route();
+</script>
